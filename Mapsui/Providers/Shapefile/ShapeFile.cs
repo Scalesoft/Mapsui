@@ -163,8 +163,8 @@ namespace Mapsui.Providers.Shapefile
         private BinaryReader _brShapeFile;
         private BinaryReader _brShapeIndex;
         private readonly DbaseReader _dbaseFile;
-        private FileStream _fsShapeFile;
-        private FileStream _fsShapeIndex;
+        private Stream _fsShapeFile;
+        private Stream _fsShapeIndex;
         private readonly object _syncRoot = new object();
 
         /// <summary>
@@ -198,6 +198,13 @@ namespace Mapsui.Providers.Shapefile
             ParseHeader();
             //Read projection file
             ParseProjection();
+        }
+
+        public ShapeFile(Stream shapeStream, Stream dataStream, Stream indexStream = null)
+        {
+            _dbaseFile = new DbaseReader(dataStream);
+            ParseHeader(indexStream);
+            // skip .ParseProjection, it is not implemented
         }
 
         /// <summary>
@@ -526,6 +533,17 @@ namespace Mapsui.Providers.Shapefile
         {
             _fsShapeIndex = new FileStream(Path.ChangeExtension(_filename, ".shx"), FileMode.Open,
                                           FileAccess.Read);
+            ParseHeaderImpl();
+        }
+
+        private void ParseHeader(Stream indexStream)
+        {
+            _fsShapeIndex = indexStream;
+            ParseHeaderImpl();
+        }
+
+        private void ParseHeaderImpl()
+        {
             _brShapeIndex = new BinaryReader(_fsShapeIndex, Encoding.Unicode);
 
             _brShapeIndex.BaseStream.Seek(0, 0);

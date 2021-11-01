@@ -5,7 +5,7 @@
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
-// 
+//
 // SharpMap is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -13,7 +13,7 @@
 
 // You should have received a copy of the GNU Lesser General Public License
 // along with SharpMap; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 // Note:
 // Good stuff on DBase format: http://www.clicketyclick.dk/databases/xbase/format/
@@ -45,7 +45,7 @@ namespace Mapsui.Providers.Shapefile
         private short _recordLength;
         private readonly string _filename;
         private DbaseField[] _dbaseColumns;
-        private FileStream _fs;
+        private Stream _stream;
         private BinaryReader _br;
         private bool _headerIsParsed;
 
@@ -54,6 +54,12 @@ namespace Mapsui.Providers.Shapefile
             if (!File.Exists(filename))
                 throw new FileNotFoundException(String.Format("Could not find file \"{0}\"", filename));
             _filename = filename;
+            _headerIsParsed = false;
+        }
+
+        public DbaseReader(Stream stream)
+        {
+            _stream = stream;
             _headerIsParsed = false;
         }
 
@@ -67,8 +73,8 @@ namespace Mapsui.Providers.Shapefile
 
         public void Open()
         {
-            _fs = new FileStream(_filename, FileMode.Open, FileAccess.Read);
-            _br = new BinaryReader(_fs);
+            _stream ??= new FileStream(_filename, FileMode.Open, FileAccess.Read);
+            _br = new BinaryReader(_stream);
             _isOpen = true;
             if (!_headerIsParsed) ParseDbfHeader(); // Don't read the header if it's already parsed
         }
@@ -76,7 +82,7 @@ namespace Mapsui.Providers.Shapefile
         public void Close()
         {
             _br.Close();
-            _fs.Close();
+            _stream.Close();
             _isOpen = false;
         }
 
@@ -85,10 +91,10 @@ namespace Mapsui.Providers.Shapefile
             if (_isOpen)
                 Close();
             _br = null;
-            _fs = null;
+            _stream = null;
         }
 
-        // Binary Tree not working yet on Mono 
+        // Binary Tree not working yet on Mono
         // see bug: http://bugzilla.ximian.com/show_bug.cgi?id=78502
 #if !MONO
         /// <summary>
@@ -160,9 +166,9 @@ namespace Mapsui.Providers.Shapefile
             _numberOfRecords = _br.ReadInt32(); // read number of records.
             _headerLength = _br.ReadInt16(); // read length of header structure.
             _recordLength = _br.ReadInt16(); // read length of a record
-            _fs.Seek(29, SeekOrigin.Begin); //Seek to encoding flag
+            _stream.Seek(29, SeekOrigin.Begin); //Seek to encoding flag
             _fileEncoding = GetDbaseLanguageDriver(_br.ReadByte()); //Read and parse Language driver
-            _fs.Seek(32, SeekOrigin.Begin); //Move past the reserved bytes
+            _stream.Seek(32, SeekOrigin.Begin); //Move past the reserved bytes
 
             int numberOfColumns = (_headerLength - 31)/32; // calculate the number of DataColumns in the header
             _dbaseColumns = new DbaseField[numberOfColumns];
@@ -211,7 +217,7 @@ namespace Mapsui.Providers.Shapefile
                         _dbaseColumns[i].DataType = typeof (Int32);
                     else
                         _dbaseColumns[i].DataType = typeof (Int64);
-                _fs.Seek(_fs.Position + 14, 0);
+                _stream.Seek(_stream.Position + 14, 0);
             }
             _headerIsParsed = true;
         }
@@ -222,13 +228,13 @@ namespace Mapsui.Providers.Shapefile
             switch (dbasecode)
             {
                 case 0x01:
-                    return Encoding.GetEncoding(437); //DOS USA code page 437 
+                    return Encoding.GetEncoding(437); //DOS USA code page 437
                 case 0x02:
-                    return Encoding.GetEncoding(850); // DOS Multilingual code page 850 
+                    return Encoding.GetEncoding(850); // DOS Multilingual code page 850
                 case 0x03:
-                    return Encoding.GetEncoding(1252); // Windows ANSI code page 1252 
+                    return Encoding.GetEncoding(1252); // Windows ANSI code page 1252
                 case 0x04:
-                    return Encoding.GetEncoding(10000); // Standard Macintosh 
+                    return Encoding.GetEncoding(10000); // Standard Macintosh
                 case 0x08:
                     return Encoding.GetEncoding(865); // Danish OEM
                 case 0x09:
@@ -310,9 +316,9 @@ namespace Mapsui.Providers.Shapefile
                 case 0x67:
                     return Encoding.GetEncoding(861); // Icelandic MS–DOS
                 case 0x68:
-                    return Encoding.GetEncoding(895); // Kamenicky (Czech) MS-DOS 
+                    return Encoding.GetEncoding(895); // Kamenicky (Czech) MS-DOS
                 case 0x69:
-                    return Encoding.GetEncoding(620); // Mazovia (Polish) MS-DOS 
+                    return Encoding.GetEncoding(620); // Mazovia (Polish) MS-DOS
                 case 0x6A:
                     return Encoding.GetEncoding(737); // Greek MS–DOS (437G)
                 case 0x6B:
@@ -330,9 +336,9 @@ namespace Mapsui.Providers.Shapefile
                 case 0x7C:
                     return Encoding.GetEncoding(874); // Thai Windows/MS–DOS
                 case 0x7D:
-                    return Encoding.GetEncoding(1255); // Hebrew Windows 
+                    return Encoding.GetEncoding(1255); // Hebrew Windows
                 case 0x7E:
-                    return Encoding.GetEncoding(1256); // Arabic Windows 
+                    return Encoding.GetEncoding(1256); // Arabic Windows
                 case 0x86:
                     return Encoding.GetEncoding(737); // Greek OEM
                 case 0x87:
@@ -340,11 +346,11 @@ namespace Mapsui.Providers.Shapefile
                 case 0x88:
                     return Encoding.GetEncoding(857); // Turkish OEM
                 case 0x96:
-                    return Encoding.GetEncoding(10007); // Russian Macintosh 
+                    return Encoding.GetEncoding(10007); // Russian Macintosh
                 case 0x97:
-                    return Encoding.GetEncoding(10029); // Eastern European Macintosh 
+                    return Encoding.GetEncoding(10029); // Eastern European Macintosh
                 case 0x98:
-                    return Encoding.GetEncoding(10006); // Greek Macintosh 
+                    return Encoding.GetEncoding(10006); // Greek Macintosh
                 case 0xC8:
                     return Encoding.GetEncoding(1250); // Eastern European Windows
                 case 0xC9:
@@ -420,7 +426,7 @@ namespace Mapsui.Providers.Shapefile
             if (colid >= _dbaseColumns.Length || colid < 0)
                 throw ((new ArgumentException("Column index out of range")));
 
-            _fs.Seek(_headerLength + oid*_recordLength, 0);
+            _stream.Seek(_headerLength + oid*_recordLength, 0);
             for (int i = 0; i < colid; i++)
                 _br.BaseStream.Seek(_dbaseColumns[i].Length, SeekOrigin.Current);
 
@@ -452,12 +458,12 @@ namespace Mapsui.Providers.Shapefile
         {
             if (oid >= _numberOfRecords)
                 throw (new ArgumentException("Invalid DataRow requested at index " + oid.ToString(CultureInfo.InvariantCulture)));
-            _fs.Seek(_headerLength + oid * _recordLength, 0);
+            _stream.Seek(_headerLength + oid * _recordLength, 0);
 
             var dr = table.New();
 
             if (_br.ReadChar() == '*') return null; // is record marked deleted?
-                
+
 
             foreach (var dbf in _dbaseColumns)
             {
@@ -516,9 +522,9 @@ namespace Mapsui.Providers.Shapefile
                         return date;
                     return DBNull.Value;
 #else
-					try 
+					try
 					{
-						return date = DateTime.ParseExact ( System.Text.Encoding.UTF7.GetString((br.ReadBytes(8))), 	
+						return date = DateTime.ParseExact ( System.Text.Encoding.UTF7.GetString((br.ReadBytes(8))),
 						"yyyyMMdd", Mapsui.Map.numberFormat_EnUS, System.Globalization.DateTimeStyles.None );
 					}
 					catch ( Exception e )
