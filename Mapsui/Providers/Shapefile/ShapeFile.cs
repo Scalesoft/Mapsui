@@ -5,7 +5,7 @@
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
-// 
+//
 // SharpMap is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -13,7 +13,7 @@
 
 // You should have received a copy of the GNU Lesser General Public License
 // along with SharpMap; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 using System;
 using System.Collections.Generic;
@@ -212,7 +212,7 @@ namespace Mapsui.Providers.Shapefile
         /// </summary>
         /// <remarks>
         /// The property isn't set until the first time the datasource has been opened,
-        /// and will throw an exception if this property has been called since initialization. 
+        /// and will throw an exception if this property has been called since initialization.
         /// <para>All the non-Null shapes in a shapefile are required to be of the same shape
         /// type.</para>
         /// </remarks>
@@ -523,7 +523,7 @@ namespace Mapsui.Providers.Shapefile
             if (!filename.ToLower().EndsWith(".shp"))
                 throw (new Exception("Invalid shapefile filename: " + filename));
 
-            LoadSpatialIndex(fileBasedIndex); //Load spatial index			
+            LoadSpatialIndex(fileBasedIndex); //Load spatial index
         }
 
         /// <summary>
@@ -564,7 +564,7 @@ namespace Mapsui.Providers.Shapefile
             //Read the spatial bounding box of the contents
             _brShapeIndex.BaseStream.Seek(36, 0); //seek to box
             _envelope = new BoundingBox(_brShapeIndex.ReadDouble(), _brShapeIndex.ReadDouble(), _brShapeIndex.ReadDouble(),
-                                        _brShapeIndex.ReadDouble());
+                _brShapeIndex.ReadDouble());
 
             _brShapeIndex.Close();
             _fsShapeIndex.Close();
@@ -581,7 +581,7 @@ namespace Mapsui.Providers.Shapefile
             {
                 try
                 {
-                    // todo: Automatically parse coordinate system: 
+                    // todo: Automatically parse coordinate system:
                     // var wkt = File.ReadAllText(projfile);
                     // CoordinateSystemWktReader.Parse(wkt);
 
@@ -665,7 +665,7 @@ namespace Mapsui.Providers.Shapefile
         private QuadTree CreateSpatialIndex()
         {
             var objList = new List<QuadTree.BoxObjects>();
-            //Convert all the geometries to boundingboxes 
+            //Convert all the geometries to boundingboxes
             uint i = 0;
             foreach (var box in GetAllFeatureBoundingBoxes())
             {
