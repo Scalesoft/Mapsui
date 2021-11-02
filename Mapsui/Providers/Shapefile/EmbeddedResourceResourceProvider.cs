@@ -15,7 +15,7 @@ namespace Mapsui.Providers.Shapefile
 
         private readonly Dictionary<DataType, string> _resourceNameDataTypeDict = new Dictionary<DataType, string>();
 
-        public EmbeddedResourceResourceProvider(string shapeFileResourceName)
+        public EmbeddedResourceResourceProvider(string shapeFileResourceName, Assembly assembly = null)
         {
             _shapeFileResourceName = shapeFileResourceName;
             _resourceNameDataTypeDict.Add(DataType.Shape, shapeFileResourceName);
@@ -24,7 +24,7 @@ namespace Mapsui.Providers.Shapefile
             _resourceNameDataTypeDict.Add(DataType.SpatialIndex, ReplaceLast(shapeFileResourceName, $".{FileExtensions.Shape}",$".{FileExtensions.SpatialIndex}"));
             _resourceNameDataTypeDict.Add(DataType.Projection, ReplaceLast(shapeFileResourceName, $".{FileExtensions.Shape}",$".{FileExtensions.Projection}"));
 
-            _assembly = Assembly.GetExecutingAssembly();
+            _assembly = assembly ?? Assembly.GetExecutingAssembly();
             _resourceNames = _assembly.GetManifestResourceNames();
         }
 
