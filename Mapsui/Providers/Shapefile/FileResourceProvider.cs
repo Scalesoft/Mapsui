@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using Mapsui.Utilities;
 
 namespace Mapsui.Providers.Shapefile
 {

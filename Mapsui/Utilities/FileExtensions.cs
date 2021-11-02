@@ -1,4 +1,4 @@
-namespace Mapsui.Providers.Shapefile
+namespace Mapsui.Utilities
 {
     public class FileExtensions
     {
