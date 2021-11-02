@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>Mapsui.Wpf</id>
+    <id>Scalesoft.Mapsui.Wpf</id>
     <version>$version$</version>
     <title>Mapsui</title>
     <authors>Paul den Dulk</authors>
@@ -17,7 +17,7 @@
     <dependencies>
       <!-- [ or ] is including, ( or ) is excluding -->
       <group targetFramework="net48">
-        <dependency id="Mapsui" version="$version$"/>
+        <dependency id="Scalesoft.Mapsui" version="$version$"/>
         <dependency id="BruTile" version="[4.0.0,5.0.0)"/>
         <dependency id="SkiaSharp.Views.WPF" version="[2.80.2,3.0.0)"/>
       </group>

@@ -63,9 +63,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NuSpec", "NuSpec", "{D90027
 		NuSpec\Mapsui.Android.nuspec = NuSpec\Mapsui.Android.nuspec
 		NuSpec\Mapsui.Forms.nuspec = NuSpec\Mapsui.Forms.nuspec
 		NuSpec\Mapsui.iOS.nuspec = NuSpec\Mapsui.iOS.nuspec
-		NuSpec\Mapsui.nuspec = NuSpec\Mapsui.nuspec
+		NuSpec\Scalesoft.Mapsui.nuspec = NuSpec\Scalesoft.Mapsui.nuspec
 		NuSpec\Mapsui.Uwp.nuspec = NuSpec\Mapsui.Uwp.nuspec
-		NuSpec\Mapsui.Wpf.nuspec = NuSpec\Mapsui.Wpf.nuspec
+		NuSpec\Scalesoft.Mapsui.Wpf.nuspec = NuSpec\Scalesoft.Mapsui.Wpf.nuspec
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{CB6BE9F9-5ECF-471B-9D93-605E2BD6825D}"
