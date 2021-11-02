@@ -165,6 +165,7 @@ namespace Mapsui.Providers.Shapefile
         private readonly DbaseReader _dbaseFile;
         private Stream _fsShapeFile;
         private Stream _fsShapeIndex;
+        private readonly IResourceProvider _resourceProvider;
         private readonly object _syncRoot = new object();
 
         /// <summary>
@@ -186,25 +187,32 @@ namespace Mapsui.Providers.Shapefile
         /// <param name="fileBasedIndex">Use file-based spatial index</param>
         public ShapeFile(string filename, bool fileBasedIndex = false)
         {
-            _filename = filename;
-            _fileBasedIndex = (fileBasedIndex) && File.Exists(Path.ChangeExtension(filename, ".shx"));
+            _resourceProvider = new FileResourceProvider(filename);
+            _filename = _resourceProvider.GetMainResourceName();
+            _fileBasedIndex = (fileBasedIndex) && _resourceProvider.ResourceExists(DataType.Index);
 
             //Initialize DBF
-            //string dbffile = _Filename.Substring(0, _Filename.LastIndexOf(".")) + ".dbf";
-            string dbffile = Path.ChangeExtension(filename, ".dbf");
-            if (File.Exists(dbffile))
-                _dbaseFile = new DbaseReader(dbffile);
+            if (_resourceProvider.ResourceExists(DataType.DB))
+                _dbaseFile = new DbaseReader(_resourceProvider);
             //Parse shape header
             ParseHeader();
             //Read projection file
             ParseProjection();
         }
 
-        public ShapeFile(Stream shapeStream, Stream dataStream, Stream indexStream = null)
+        public ShapeFile(IResourceProvider resourceProvider)
         {
-            _dbaseFile = new DbaseReader(dataStream);
-            ParseHeader(indexStream);
-            // skip .ParseProjection, it is not implemented
+            _resourceProvider = resourceProvider;
+            _filename = _resourceProvider.GetMainResourceName();
+            _fileBasedIndex = false;
+
+            //Initialize DBF
+            if (_resourceProvider.ResourceExists(DataType.DB))
+                _dbaseFile = new DbaseReader(_resourceProvider);
+            //Parse shape header
+            ParseHeader();
+            //Read projection file
+            ParseProjection();
         }
 
         /// <summary>
@@ -335,9 +343,9 @@ namespace Mapsui.Providers.Shapefile
 
             if (!_isOpen)
             {
-                _fsShapeIndex = new FileStream(_filename.Remove(_filename.Length - 4, 4) + ".shx", FileMode.Open, FileAccess.Read);
+                _fsShapeIndex = _resourceProvider.OpenStream(DataType.Index);
                 _brShapeIndex = new BinaryReader(_fsShapeIndex, Encoding.Unicode);
-                _fsShapeFile = new FileStream(_filename, FileMode.Open, FileAccess.Read);
+                _fsShapeFile = _resourceProvider.OpenStream(DataType.Shape);
                 _brShapeFile = new BinaryReader(_fsShapeFile);
                 InitializeShape(_filename, _fileBasedIndex);
                 if (_dbaseFile != null)
@@ -518,8 +526,11 @@ namespace Mapsui.Providers.Shapefile
 
         private void InitializeShape(string filename, bool fileBasedIndex)
         {
-            if (!File.Exists(filename))
-                throw new FileNotFoundException(String.Format("Could not find file \"{0}\"", filename));
+            if (!_resourceProvider.ResourceExists(DataType.Shape))
+            {
+                throw new FileNotFoundException(String.Format("Could not find resource \"{0}\"", filename));
+            }
+
             if (!filename.ToLower().EndsWith(".shp"))
                 throw (new Exception("Invalid shapefile filename: " + filename));
 
@@ -531,19 +542,7 @@ namespace Mapsui.Providers.Shapefile
         /// </summary>
         private void ParseHeader()
         {
-            _fsShapeIndex = new FileStream(Path.ChangeExtension(_filename, ".shx"), FileMode.Open,
-                                          FileAccess.Read);
-            ParseHeaderImpl();
-        }
-
-        private void ParseHeader(Stream indexStream)
-        {
-            _fsShapeIndex = indexStream;
-            ParseHeaderImpl();
-        }
-
-        private void ParseHeaderImpl()
-        {
+            _fsShapeIndex = _resourceProvider.OpenStream(DataType.Index);
             _brShapeIndex = new BinaryReader(_fsShapeIndex, Encoding.Unicode);
 
             _brShapeIndex.BaseStream.Seek(0, 0);
@@ -575,21 +574,18 @@ namespace Mapsui.Providers.Shapefile
         /// </summary>
         private void ParseProjection()
         {
-            string projfile = Path.GetDirectoryName(Filename) + "\\" + Path.GetFileNameWithoutExtension(Filename) +
-                              ".prj";
-            if (File.Exists(projfile))
+            if (_resourceProvider.ResourceExists(DataType.Projection))
             {
                 try
                 {
                     // todo: Automatically parse coordinate system:
-                    // var wkt = File.ReadAllText(projfile);
+                    // var wkt = File.ReadAllText();
                     // CoordinateSystemWktReader.Parse(wkt);
 
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceWarning("Coordinate system file '" + projfile +
-                                       "' found, but could not be parsed. WKT parser returned:" + ex.Message);
+                    Trace.TraceWarning("Coordinate system resource found, but could not be parsed. WKT parser returned:" + ex.Message);
                     throw;
                 }
             }

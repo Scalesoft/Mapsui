@@ -29,6 +29,8 @@ namespace Mapsui.Providers.Shapefile
 {
     internal class DbaseReader : IDisposable
     {
+        private readonly IResourceProvider _resourceProvider;
+
         private struct DbaseField
         {
             public string ColumnName;
@@ -43,23 +45,14 @@ namespace Mapsui.Providers.Shapefile
         private int _numberOfRecords;
         private short _headerLength;
         private short _recordLength;
-        private readonly string _filename;
         private DbaseField[] _dbaseColumns;
         private Stream _stream;
         private BinaryReader _br;
         private bool _headerIsParsed;
 
-        public DbaseReader(string filename)
+        public DbaseReader(IResourceProvider resourceProvider)
         {
-            if (!File.Exists(filename))
-                throw new FileNotFoundException(String.Format("Could not find file \"{0}\"", filename));
-            _filename = filename;
-            _headerIsParsed = false;
-        }
-
-        public DbaseReader(Stream stream)
-        {
-            _stream = stream;
+            _resourceProvider = resourceProvider;
             _headerIsParsed = false;
         }
 
@@ -73,7 +66,7 @@ namespace Mapsui.Providers.Shapefile
 
         public void Open()
         {
-            _stream ??= new FileStream(_filename, FileMode.Open, FileAccess.Read);
+            _stream = _resourceProvider.OpenStream(DataType.DB);
             _br = new BinaryReader(_stream);
             _isOpen = true;
             if (!_headerIsParsed) ParseDbfHeader(); // Don't read the header if it's already parsed
