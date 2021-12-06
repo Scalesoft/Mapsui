@@ -23,7 +23,7 @@ using System.Runtime.InteropServices;
 
 
 
-[assembly: AssemblyVersion("3.0.2.2")]
-[assembly: AssemblyFileVersion("3.0.2.2")]
+[assembly: AssemblyVersion("3.0.3.2")]
+[assembly: AssemblyFileVersion("3.0.3.2")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyInformationalVersion("3.0.2.2")]
+[assembly: AssemblyInformationalVersion("3.0.3.2")]

@@ -24,9 +24,9 @@ using Android.App;
 //
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
-// [assembly: AssemblyVersion("3.0.2.2")]
-[assembly: AssemblyVersion("3.0.2.2")]
-[assembly: AssemblyFileVersion("3.0.2.2")]
+// [assembly: AssemblyVersion("3.0.3.2")]
+[assembly: AssemblyVersion("3.0.3.2")]
+[assembly: AssemblyFileVersion("3.0.3.2")]
 
 // Add some common permissions, these can be removed if not needed
 [assembly: UsesPermission(Android.Manifest.Permission.Internet)]
