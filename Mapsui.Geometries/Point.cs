@@ -16,6 +16,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Mapsui.Geometries.Utilities;
 
 // ReSharper disable NonReadonlyMemberInGetHashCode // todo: Fix this real issue
@@ -55,7 +56,7 @@ namespace Mapsui.Geometries
         ///     Create a new point by a douuble[] array
         /// </summary>
         /// <param name="point"></param>
-        public Point(double[] point)
+        public Point(params double[] point)
         {
             if (point.Length != 2)
                 throw new Exception("Only 2 dimensions are supported for points");
@@ -167,7 +168,7 @@ namespace Mapsui.Geometries
         /// <returns></returns>
         public double[] ToDoubleArray()
         {
-            return new[] {_x, _y};
+            return new[] { _x, _y };
         }
 
         /// <summary>
@@ -184,8 +185,8 @@ namespace Mapsui.Geometries
         public static Point FromDMS(double longDegrees, double longMinutes, double longSeconds,
             double latDegrees, double latMinutes, double latSeconds)
         {
-            return new Point(longDegrees + longMinutes/60 + longSeconds/3600,
-                latDegrees + latMinutes/60 + latSeconds/3600);
+            return new Point(longDegrees + longMinutes / 60 + longSeconds / 3600,
+                latDegrees + latMinutes / 60 + latSeconds / 3600);
         }
 
         /// <summary>
@@ -238,7 +239,7 @@ namespace Mapsui.Geometries
         /// <returns></returns>
         public static Point operator *(Point m, double d)
         {
-            return new Point(m.X*d, m.Y*d);
+            return new Point(m.X * d, m.Y * d);
         }
 
         /// <summary>
@@ -246,7 +247,7 @@ namespace Mapsui.Geometries
         /// </summary>
         /// <param name="p">Point to compare to</param>
         /// <returns></returns>
-        public virtual bool Equals(Point p)
+        public virtual bool Equals(Point? p)
         {
             // ReSharper disable CompareOfFloatsByEqualityOperator
             return (p != null) && (p.X == _x) && (p.Y == _y) && (_isEmpty == p.IsEmpty());
@@ -297,7 +298,7 @@ namespace Mapsui.Geometries
         ///     The minimum bounding box for this Geometry.
         /// </summary>
         /// <returns></returns>
-        public override BoundingBox BoundingBox =>  _isEmpty ? null : new BoundingBox(X, Y, X, Y);
+        public override BoundingBox? BoundingBox => _isEmpty ? null : new BoundingBox(X, Y, X, Y);
 
         /// <summary>
         ///     Calculates a new point by rotating this point clockwise about the specified center point
@@ -348,7 +349,7 @@ namespace Mapsui.Geometries
         {
             return false;
         }
-        
+
         public override bool Equals(Geometry geom)
         {
             var point = geom as Point;

@@ -1,11 +1,22 @@
 ﻿using Mapsui.Layers;
 using Mapsui.Providers;
 using Mapsui.Styles;
-using Mapsui.UI.Forms;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using Mapsui.Extensions;
+using Mapsui.GeometryLayer;
+
+#if __MAUI__
+using Mapsui.UI.Maui;
+using Microsoft.Maui;
+using Microsoft.Maui.Controls;
+#else
+using Mapsui.UI.Forms;
 using Xamarin.Forms;
+#endif
 
 namespace Mapsui.UI.Objects
 {
@@ -18,9 +29,9 @@ namespace Mapsui.UI.Objects
     /// </remarks>
     public class MyLocationLayer : MemoryLayer
     {
-        MapView mapView;
-        Feature feature;
-        Feature featureDir;
+        private readonly MapView mapView;
+        private readonly GeometryFeature feature;
+        private readonly GeometryFeature featureDir;
 
         private static int bitmapMovingId = -1;
         private static int bitmapStillId = -1;
@@ -38,10 +49,7 @@ namespace Mapsui.UI.Objects
         /// </summary>
         public bool IsMoving
         {
-            get
-            {
-                return isMoving;
-            }
+            get => isMoving;
             set
             {
                 if (isMoving != value)
@@ -52,19 +60,13 @@ namespace Mapsui.UI.Objects
             }
         }
 
-        Position myLocation = new Position(0, 0);
+        private Position myLocation = new(0, 0);
 
         /// <summary>
         /// Position of location, that is displayed
         /// </summary>
         /// <value>Position of location</value>
-        public Position MyLocation
-        {
-            get
-            {
-                return myLocation;
-            }
-        }
+        public Position MyLocation => myLocation;
 
         /// <summary>
         /// Movement direction of device at location
@@ -101,10 +103,7 @@ namespace Mapsui.UI.Objects
         /// <param name="view">MapView, to which this layer belongs</param>
         public MyLocationLayer(MapView view)
         {
-            if (view == null)
-                throw new ArgumentNullException("MapView shouldn't be null");
-            
-            mapView = view;
+            mapView = view ?? throw new ArgumentNullException("MapView shouldn't be null");
 
             Enabled = false;
 
@@ -141,9 +140,9 @@ namespace Mapsui.UI.Objects
                 }
             }
 
-            feature = new Feature
+            feature = new GeometryFeature
             {
-                Geometry = myLocation.ToMapsui(),
+                Geometry = myLocation.ToMapsui().ToPoint(),
                 ["Label"] = "MyLocation moving",
             };
 
@@ -158,9 +157,9 @@ namespace Mapsui.UI.Objects
                 Opacity = 1,
             });
 
-            featureDir = new Feature
+            featureDir = new GeometryFeature
             {
-                Geometry = myLocation.ToMapsui(),
+                Geometry = myLocation.ToMapsui().ToPoint(),
                 ["Label"] = "My view direction",
             };
 
@@ -175,7 +174,7 @@ namespace Mapsui.UI.Objects
                 Opacity = 1,
             });
 
-            DataSource = new MemoryProvider(new List<Feature> { featureDir, feature });
+            DataSource = new MemoryProvider<IFeature>(new List<IFeature> { featureDir, feature });
             Style = null;
         }
 
@@ -183,7 +182,7 @@ namespace Mapsui.UI.Objects
         /// Updates my location
         /// </summary>
         /// <param name="newLocation">New location</param>
-        public void UpdateMyLocation(Position newLocation, bool animated = true)
+        public void UpdateMyLocation(Position newLocation, bool animated = false)
         {
             if (!MyLocation.Equals(newLocation))
             {
@@ -197,28 +196,31 @@ namespace Mapsui.UI.Objects
                     animationMyLocationStart = MyLocation;
                     animationMyLocationEnd = newLocation;
 
-                    var animation = new Animation((v) =>
-                    {
+                    var animation = new Animation((v) => {
                         var deltaLat = (animationMyLocationEnd.Latitude - animationMyLocationStart.Latitude) * v;
                         var deltaLon = (animationMyLocationEnd.Longitude - animationMyLocationStart.Longitude) * v;
                         var modified = InternalUpdateMyLocation(new Position(animationMyLocationStart.Latitude + deltaLat, animationMyLocationStart.Longitude + deltaLon));
-                    // Update viewport
-                    if (modified && mapView.MyLocationFollow && mapView.MyLocationEnabled)
-                            mapView._mapControl.Navigator.CenterOn(MyLocation.ToMapsui());
-                    // Refresh map
-                    if (mapView.MyLocationEnabled && modified)
+                        // Update viewport
+                        if (modified && mapView.MyLocationFollow && mapView.MyLocationEnabled)
+                            mapView.Navigator.CenterOn(MyLocation.ToMapsui());
+                        // Refresh map
+                        if (mapView.MyLocationEnabled && modified)
                             mapView.Refresh();
                     }, 0.0, 1.0);
 
-                    // At the end, update viewport
-                    animation.Commit(mapView, animationMyLocationName, 100, 3000, finished: (s, v) => mapView.Map.RefreshData(mapView._mapControl.Viewport.Extent, mapView._mapControl.Viewport.Resolution, ChangeType.Discrete));
+                    if (mapView.Viewport.Extent != null)
+                    {
+                        var fetchInfo = new FetchInfo(mapView.Viewport.Extent, mapView.Viewport.Resolution, mapView.Map?.CRS, ChangeType.Discrete);
+                        // At the end, update viewport
+                        animation.Commit(mapView, animationMyLocationName, 100, 3000, finished: (s, v) => mapView.Map?.RefreshData(fetchInfo));
+                    }
                 }
                 else
                 {
                     var modified = InternalUpdateMyLocation(newLocation);
                     // Update viewport
                     if (modified && mapView.MyLocationFollow && mapView.MyLocationEnabled)
-                        mapView._mapControl.Navigator.CenterOn(MyLocation.ToMapsui());
+                        mapView.Navigator.CenterOn(MyLocation.ToMapsui());
                     // Refresh map
                     if (mapView.MyLocationEnabled && modified)
                         mapView.Refresh();
@@ -231,7 +233,7 @@ namespace Mapsui.UI.Objects
         /// </summary>
         /// <param name="newDirection">New direction</param>
         /// <param name="newViewportRotation">New viewport rotation</param>
-        public void UpdateMyDirection(double newDirection, double newViewportRotation, bool animated = true)
+        public void UpdateMyDirection(double newDirection, double newViewportRotation, bool animated = false)
         {
             var newRotation = (int)(newDirection - newViewportRotation);
             var oldRotation = (int)((SymbolStyle)feature.Styles.First()).SymbolRotation;
@@ -255,8 +257,7 @@ namespace Mapsui.UI.Objects
 
                 if (animated)
                 {
-                    var animation = new Animation((v) =>
-                    {
+                    var animation = new Animation((v) => {
                         if ((int)v != (int)((SymbolStyle)feature.Styles.First()).SymbolRotation)
                         {
                             ((SymbolStyle)feature.Styles.First()).SymbolRotation = (int)v % 360;
@@ -303,7 +304,7 @@ namespace Mapsui.UI.Objects
         /// </summary>
         /// <param name="newDirection">New direction</param>
         /// <param name="newViewportRotation">New viewport rotation</param>
-        public void UpdateMyViewDirection(double newDirection, double newViewportRotation, bool animated = true)
+        public void UpdateMyViewDirection(double newDirection, double newViewportRotation, bool animated = false)
         {
             var newRotation = (int)(newDirection - newViewportRotation);
             var oldRotation = (int)((SymbolStyle)featureDir.Styles.First()).SymbolRotation;
@@ -333,8 +334,7 @@ namespace Mapsui.UI.Objects
 
                 if (animated)
                 {
-                    var animation = new Animation((v) =>
-                    {
+                    var animation = new Animation((v) => {
                         if ((int)v != (int)((SymbolStyle)featureDir.Styles.First()).SymbolRotation)
                         {
                             ((SymbolStyle)featureDir.Styles.First()).SymbolRotation = (int)v % 360;
@@ -359,8 +359,8 @@ namespace Mapsui.UI.Objects
             if (!myLocation.Equals(newLocation))
             {
                 myLocation = newLocation;
-                feature.Geometry = myLocation.ToMapsui();
-                featureDir.Geometry = myLocation.ToMapsui();
+                feature.Geometry = myLocation.ToPoint();
+                featureDir.Geometry = myLocation.ToPoint();
                 modified = true;
             }
 

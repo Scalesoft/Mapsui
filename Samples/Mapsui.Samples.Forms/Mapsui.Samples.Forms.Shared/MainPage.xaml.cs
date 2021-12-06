@@ -1,10 +1,7 @@
-﻿using Mapsui.Layers;
-using Mapsui.Samples.Common;
+﻿using Mapsui.Samples.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -12,12 +9,12 @@ namespace Mapsui.Samples.Forms
 {
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class MainPage : ContentPage
-	{
-        IEnumerable<ISample> allSamples;
-        Func<object, EventArgs, bool> clicker;
+    {
+        IEnumerable<ISample>? allSamples;
+        Func<object?, EventArgs, bool>? clicker;
 
         public MainPage()
-		{
+        {
             InitializeComponent();
 
             allSamples = AllSamples.GetSamples();

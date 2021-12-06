@@ -111,17 +111,11 @@ namespace Mapsui.Geometries
             return true;
         }
 
-        [Obsolete("Use the BoundingBox field instead")]
-        public new BoundingBox GetBoundingBox()
-        {
-            return BoundingBox;
-        }
-
         /// <summary>
         ///     The minimum bounding box for this Geometry, returned as a BoundingBox.
         /// </summary>
         /// <returns></returns>
-        public override BoundingBox BoundingBox
+        public override BoundingBox? BoundingBox
         {
             get
             {
@@ -130,7 +124,7 @@ namespace Mapsui.Geometries
                 var b = this[0].BoundingBox;
                 foreach (var geometry in Collection)
                 {
-                    b = b.Join(geometry.BoundingBox);
+                    b = b != null ? b.Join(geometry.BoundingBox) : geometry.BoundingBox?.Clone();
                 }
 
                 return b;
@@ -158,7 +152,7 @@ namespace Mapsui.Geometries
         /// </summary>
         /// <param name="g"></param>
         /// <returns>True if the GeometryCollections are equals</returns>
-        public bool Equals(GeometryCollection g)
+        public bool Equals(GeometryCollection? g)
         {
             if (g == null)
                 return false;

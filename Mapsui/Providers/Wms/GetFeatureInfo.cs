@@ -9,18 +9,17 @@ using System.Threading.Tasks;
 
 namespace Mapsui.Providers.Wms
 {
-    public delegate void StatusEventHandler(object sender, FeatureInfo featureInfo);
+    public delegate void StatusEventHandler(object sender, FeatureInfo? featureInfo);
 
     public class GetFeatureInfo
     {
-        private string _infoFormat;
-        private string _layerName;
-        private int _timeOut;
-        public event StatusEventHandler IdentifyFinished;
-        public event StatusEventHandler IdentifyFailed;
+        private string? _infoFormat;
+        private string? _layerName;
+        public event StatusEventHandler? IdentifyFinished;
+        public event StatusEventHandler? IdentifyFailed;
         private readonly Func<string, Task<Stream>> _getStreamAsync;
 
-        public GetFeatureInfo(Func<string, Task<Stream>> getStreamAsync = null)
+        public GetFeatureInfo(Func<string, Task<Stream>>? getStreamAsync = null)
         {
             TimeOut = 7000;
             _getStreamAsync = getStreamAsync ?? GetStreamAsync;
@@ -29,18 +28,14 @@ namespace Mapsui.Providers.Wms
         /// <summary>
         /// Timeout of web request in milliseconds. Default is 7 seconds
         /// </summary>
-        public int TimeOut
-        {
-            get { return _timeOut; }
-            set { _timeOut = value; }
-        }
+        public int TimeOut { get; set; }
 
-        public Dictionary<string, string> ExtraParams { get; set; }
+        public Dictionary<string, string>? ExtraParams { get; set; }
 
         /// <summary>
         /// Provides the base authentication interface for retrieving credentials for Web client authentication.
         /// </summary>
-        public ICredentials Credentials { get; set; }
+        public ICredentials? Credentials { get; set; }
 
         /// <summary>
         /// Request FeatureInfo for a WMS Server
@@ -63,28 +58,25 @@ namespace Mapsui.Providers.Wms
             _infoFormat = infoFormat;
             var requestUrl = CreateRequestUrl(baseUrl, wmsVersion, infoFormat, srs, layer, extendXmin, extendYmin, extendXmax, extendYmax, x, y, mapWidth, mapHeight);
 
-            var thread = new Thread(delegate()
-            {
-                using (var task = _getStreamAsync(requestUrl))
+            var thread = new Thread(delegate () {
+                using var task = _getStreamAsync(requestUrl);
+                try
                 {
-                    try
-                    {
-                        var parser = GetParserFromFormat(_infoFormat);
+                    var parser = GetParserFromFormat(_infoFormat);
 
-                        if (parser == null)
-                        {
-                            OnIdentifyFailed();
-                            return;
-                        }
-
-                        var featureInfo = parser.ParseWMSResult(_layerName, task.Result);
-                        task.Result.Close();
-                        OnIdentifyFinished(featureInfo);
-                    }
-                    catch (Exception)
+                    if (parser == null)
                     {
                         OnIdentifyFailed();
+                        return;
                     }
+
+                    var featureInfo = parser.ParseWMSResult(_layerName, task.Result);
+                    task.Result.Close();
+                    OnIdentifyFinished(featureInfo);
+                }
+                catch (Exception)
+                {
+                    OnIdentifyFailed();
                 }
             });
 
@@ -122,7 +114,7 @@ namespace Mapsui.Providers.Wms
             //Create specific strings for the request
             var bboxString = string.Format(CultureInfo.InvariantCulture, "{0},{1},{2},{3}", extendXmin, extendYmin, extendXmax, extendYmax);
 
-            //Build requist url
+            //Build request url
             var requestUrl = string.Format(CultureInfo.InvariantCulture,
                                            "{0}{1}SERVICE=WMS&" +
                                            "REQUEST=GetFeatureInfo&" +
@@ -155,7 +147,7 @@ namespace Mapsui.Providers.Wms
             if (ExtraParams != null)
             {
                 foreach (var extraParam in ExtraParams)
-                    requestUrl += string.Format("&{0}={1}", extraParam.Key, extraParam.Value);
+                    requestUrl += $"&{extraParam.Key}={extraParam.Value}";
             }
 
             return requestUrl;
@@ -165,7 +157,7 @@ namespace Mapsui.Providers.Wms
         /// Get a parser that is able to parse the output returned from the service
         /// </summary>
         /// <param name="format">Output format of the service</param>
-        private static IGetFeatureInfoParser GetParserFromFormat(string format)
+        private static IGetFeatureInfoParser? GetParserFromFormat(string format)
         {
             if (format.Equals("application/vnd.ogc.gml"))
                 return new GmlGetFeatureInfoParser();
@@ -173,9 +165,9 @@ namespace Mapsui.Providers.Wms
                 return new GmlGetFeatureInfoParser();
             if (format.Equals("text/xml"))
                 return new XmlGetFeatureInfoParser();
-            if (format.Equals("text/html"))//Not suported
+            if (format.Equals("text/html")) // Not supported
                 return null;
-            if (format.Equals("text/plain"))//Not suported
+            if (format.Equals("text/plain")) // Not supported
                 return null;
 
             return null;
@@ -184,13 +176,13 @@ namespace Mapsui.Providers.Wms
         private void OnIdentifyFinished(FeatureInfo featureInfo)
         {
             var handler = IdentifyFinished;
-            if (handler != null) handler(this, featureInfo);
+            handler?.Invoke(this, featureInfo);
         }
 
         private void OnIdentifyFailed()
         {
             var handler = IdentifyFailed;
-            if (handler != null) handler(this, null);
+            handler?.Invoke(this, null);
         }
     }
 }

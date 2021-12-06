@@ -42,7 +42,7 @@ namespace Mapsui.Geometries
         /// <summary>
         ///     Initializes an instance of a LineString
         /// </summary>
-        public LineString() : this(new List<Point>()) {}
+        public LineString() : this(new List<Point>()) { }
 
         /// <summary>
         ///     Initializes an instance of a LineString
@@ -135,7 +135,7 @@ namespace Mapsui.Geometries
         ///     The minimum bounding box for this Geometry.
         /// </summary>
         /// <returns>BoundingBox for this geometry</returns>
-        public override BoundingBox BoundingBox
+        public override BoundingBox? BoundingBox
         {
             get
             {
@@ -173,7 +173,7 @@ namespace Mapsui.Geometries
         /// </summary>
         /// <param name="lineString">LineString to compare to</param>
         /// <returns>true of the objects are spatially equal</returns>
-        public bool Equals(LineString lineString)
+        public bool Equals(LineString? lineString)
         {
             if (lineString?.Vertices.Count != Vertices.Count)
                 return false;
@@ -238,7 +238,7 @@ namespace Mapsui.Geometries
         {
             return false;
         }
-        
+
         public override bool Equals(Geometry geom)
         {
             var lineString = geom as LineString;
@@ -253,10 +253,10 @@ namespace Mapsui.Geometries
         /// <returns>List of LineString</returns>
         public List<LineString> GetSegments()
         {
-            List<LineString> segments = new List<LineString>();
-            for (int i = 0; i < Vertices.Count - 1; i++)
+            var segments = new List<LineString>();
+            for (var i = 0; i < Vertices.Count - 1; i++)
             {
-                LineString tmp = new LineString();
+                var tmp = new LineString();
                 tmp.Vertices.Add(Vertices[i]);
                 tmp.Vertices.Add(Vertices[i + 1]);
                 segments.Add(tmp);

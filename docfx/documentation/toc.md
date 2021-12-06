@@ -2,6 +2,7 @@
 ## [Quickstart Xamarin.Forms](getting-started-xamarin-forms.md)
 ## [Quickstart WPF](getting-started-wpf.md)
 ## [Quickstart UWP](getting-started-uwp.md)
+## [Quickstart WinUI](getting-started-winui.md)
 ## [Quickstart Android](getting-started-android.md)
 ## [Quickstart iOS](getting-started-ios.md)
 ## [Samples](samples.md)
@@ -22,7 +23,7 @@
 # Developing Mapsui
 ## [Contributors Guidelines](contributors-guidelines.md)
 ## [Development Constraints](development-constraints.md)
-## [Unit Tests for Rendering](rendering-tests.md)
+## [Rendering Tests](rendering-tests.md)
 ## [Documentation](documentation.md)
 # Tips
 ## [NuGet of Latest Build](nuget-of-latest-build.md)

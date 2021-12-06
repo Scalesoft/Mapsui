@@ -1,14 +1,9 @@
-﻿using Mapsui.Providers;
-using System;
-using System.ComponentModel;
+﻿using Mapsui.GeometryLayer;
 
 namespace Mapsui.UI.Objects
 {
     public interface IFeatureProvider
     {
-        Feature Feature { get; }
-//        bool IsVisible { get; }
-
-        //event EventHandler<PropertyChangedEventArgs> PropertyChanged;
+        GeometryFeature? Feature { get; }
     }
 }

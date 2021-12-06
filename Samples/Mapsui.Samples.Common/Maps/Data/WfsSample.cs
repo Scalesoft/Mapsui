@@ -5,7 +5,6 @@ using System.Net.Http;
 using BruTile;
 using BruTile.Web;
 using BruTile.Wmts;
-using Mapsui.Geometries;
 using Mapsui.Layers;
 using Mapsui.Logging;
 using Mapsui.Providers.Wfs;
@@ -30,20 +29,20 @@ namespace Mapsui.Samples.Common.Maps.Data
             {
                 const string serviceUri = "https://geoservices.buergernetz.bz.it/geoserver/ows";
 
-                var map = new Map() {CRS = "EPSG:25832"};
+                var map = new Map() { CRS = "EPSG:25832" };
                 var provider = CreateWfsProvider(serviceUri);
                 map.Layers.Add(CreateTileLayer(CreateTileSource()));
                 map.Layers.Add(CreateWfsLayer(provider));
                 map.Layers.Add(CreateLabelLayer(provider));
-                
-                var bb = new BoundingBox(550000, 5050000, 800000, 5400000);
+
+                var bb = new MRect(550000, 5050000, 800000, 5400000);
                 map.Limiter = new ViewportLimiterKeepWithin
                 {
                     PanLimits = bb
                 };
-                
+
                 return map;
-                
+
             }
             catch (WebException ex)
             {
@@ -56,7 +55,7 @@ namespace Mapsui.Samples.Common.Maps.Data
         {
             return new Layer("COMUNI_AMMINISTRATIVI")
             {
-                Style = new VectorStyle {Fill = new Brush {Color = Color.Red}},
+                Style = new VectorStyle { Fill = new Brush { Color = Color.Red } },
                 DataSource = provider,
                 IsMapInfoLayer = true
             };
@@ -70,11 +69,11 @@ namespace Mapsui.Samples.Common.Maps.Data
                 QuickGeometries = false,
                 GetFeatureGetRequest = true,
                 CRS = "EPSG:25832",
-                Labels = new List<string> {"CAMM_NOME_DE"}
+                Labels = new List<string> { "CAMM_NOME_DE" }
             };
             return provider;
         }
-        
+
         private static ILayer CreateLabelLayer(WFSProvider provider)
         {
             // Labels
@@ -92,16 +91,16 @@ namespace Mapsui.Samples.Common.Maps.Data
                 {
                     CollisionDetection = false,
                     ForeColor = Color.Black,
-                    Font = new Font {FontFamily = "GenericSerif", Size = 10},
+                    Font = new Font { FontFamily = "GenericSerif", Size = 10 },
                     HorizontalAlignment = LabelStyle.HorizontalAlignmentEnum.Center,
                     LabelColumn = labelField
                 }
             };
         }
-        
-        
-        
-        
+
+
+
+
         public static HttpTileSource CreateTileSource()
         {
             using (var httpClient = new HttpClient())
@@ -109,13 +108,13 @@ namespace Mapsui.Samples.Common.Maps.Data
             {
                 var tileSources = WmtsParser.Parse(response);
                 return tileSources.First(t =>
-                    ((WmtsTileSchema) t.Schema).Layer == "P_BZ_OF_2014_2015_2017" && t.Schema.Srs == "EPSG:25832");
+                    ((WmtsTileSchema)t.Schema).Layer == "P_BZ_OF_2014_2015_2017" && t.Schema.Srs == "EPSG:25832");
             }
         }
 
-        public static ILayer CreateTileLayer(ITileSource tileSource, string name = null)
+        public static ILayer CreateTileLayer(ITileSource tileSource, string? name = null)
         {
-            return new TileLayer(tileSource) {Name = name ?? tileSource.Name};
+            return new TileLayer(tileSource) { Name = name ?? tileSource.Name };
         }
 
     }

@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using Mapsui.Geometries;
+using Mapsui.Extensions;
 using Mapsui.Layers;
+using Mapsui.Layers.Tiling;
 using Mapsui.Providers;
 using Mapsui.Samples.Common.Helpers;
 using Mapsui.Styles;
 using Mapsui.UI;
 using Mapsui.Utilities;
 
-namespace Mapsui.Samples.Common.Maps
+#pragma warning disable CS8670 // Object or collection initializer implicitly dereferences possibly null member.
+
+namespace Mapsui.Samples.Common.Maps.Special
 {
     public class AnimatedPointsSample : ISample
     {
@@ -28,7 +31,7 @@ namespace Mapsui.Samples.Common.Maps
         {
             var map = new Map();
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
-            map.Layers.Add(new AnimatedPointsWithAutoUpdateLayer {Name = "Animated Points"});
+            map.Layers.Add(new AnimatedPointsWithAutoUpdateLayer { Name = "Animated Points" });
             return map;
         }
     }
@@ -42,36 +45,35 @@ namespace Mapsui.Samples.Common.Maps
         public AnimatedPointsWithAutoUpdateLayer()
             : base(new DynamicMemoryProvider())
         {
-            Style = new SymbolStyle {Fill = {Color = new Color(255, 215, 0, 200)}, SymbolScale = 0.9};
-            _timer = new Timer(arg => UpdateData(), this, 0, 2000);
+            Style = new SymbolStyle { Fill = { Color = new Color(255, 215, 0, 200) }, SymbolScale = 0.9 };
+            _timer = new Timer(_ => UpdateData(), this, 0, 2000);
         }
+    }
 
-        private class DynamicMemoryProvider : MemoryProvider
+    internal class DynamicMemoryProvider : MemoryProvider<PointFeature>
+    {
+        private readonly Random _random = new(0);
+
+        public override IEnumerable<PointFeature> GetFeatures(FetchInfo fetchInfo)
         {
-            private readonly Random _random = new Random(0);
+            var features = new List<PointFeature>();
+            var geometries = RandomPointGenerator.GenerateRandomPoints(fetchInfo.Extent, 10, _random.Next()).ToList();
+            var count = 0;
+            var random = _random.Next(geometries.Count);
 
-            public override IEnumerable<IFeature> GetFeaturesInView(BoundingBox box, double resolution)
+            foreach (var geometry in geometries)
             {
-                var features = new List<IFeature>();
-                var geometries = RandomPointHelper.GenerateRandomPoints(box, 10, _random.Next()).ToList();
-                var count = 0;
-                var random = _random.Next(geometries.Count);
-
-                foreach (var geometry in geometries)
+                if (count != random) // skip a random element to test robustness
                 {
-                    if (count != random) // skip a random element to test robustness
+                    var feature = new PointFeature(new MPoint(geometry.ToPoint().X, geometry.ToPoint().Y))
                     {
-                        var feature = new Feature
-                        {
-                            Geometry = geometry,
-                            ["ID"] = count.ToString(CultureInfo.InvariantCulture)
-                        };
-                        features.Add(feature);
-                    }
-                    count++;
+                        ["ID"] = count.ToString(CultureInfo.InvariantCulture)
+                    };
+                    features.Add(feature);
                 }
-                return features;
+                count++;
             }
+            return features;
         }
     }
 }

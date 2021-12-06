@@ -15,31 +15,31 @@ namespace Mapsui.Providers.Wfs.Utilities
     /// </summary>
     public class HttpClientUtil
     {
-        
+
         private readonly NameValueCollection _requestHeaders;
-        private byte[] _postData;
-        private string _proxyUrl;
-        private string _url;
-        private HttpWebRequest _webRequest;
-        private HttpWebResponse _webResponse;
-        private ICredentials _credentials;
+        private byte[]? _postData;
+        private string? _proxyUrl;
+        private string? _url;
+        private HttpWebRequest? _webRequest;
+        private HttpWebResponse? _webResponse;
+        private ICredentials? _credentials;
 
         /// <summary>
         /// Gets ans sets the Url of the request.
         /// </summary>
-        public string Url
+        public string? Url
         {
-            get { return _url; }
-            set { _url = value; }
+            get => _url;
+            set => _url = value;
         }
 
         /// <summary>
         /// Gets and sets the proxy Url of the request. 
         /// </summary>
-        public string ProxyUrl
+        public string? ProxyUrl
         {
-            get { return _proxyUrl; }
-            set { _proxyUrl = value; }
+            get => _proxyUrl;
+            set => _proxyUrl = value;
         }
 
         /// <summary>
@@ -47,18 +47,18 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public byte[] PostData
         {
-            set { _postData = value; }
+            set => _postData = value;
         }
 
         /// <summary>
         /// Gets or sets the network credentials used for authenticating the request with the Internet resource
         /// </summary>
-        public ICredentials Credentials
+        public ICredentials? Credentials
         {
-            get { return _credentials; }
-            set { _credentials = value; }
+            get => _credentials;
+            set => _credentials = value;
         }
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientUtil"/> class.
         /// </summary>
@@ -67,8 +67,8 @@ namespace Mapsui.Providers.Wfs.Utilities
             _requestHeaders = new NameValueCollection();
         }
 
-        
-        
+
+
         /// <summary>
         /// Adds a HTTP header.
         /// </summary>
@@ -92,7 +92,7 @@ namespace Mapsui.Providers.Wfs.Utilities
 
             try
             {
-                _webRequest = (HttpWebRequest) WebRequest.Create(_url);
+                _webRequest = (HttpWebRequest)WebRequest.Create(_url);
             }
             catch (SecurityException ex)
             {
@@ -120,13 +120,13 @@ namespace Mapsui.Providers.Wfs.Utilities
                     _webRequest.UseDefaultCredentials = false;
                     _webRequest.Credentials = Credentials;
                 }
-                
+
                 /* HTTP POST */
                 if (_postData != null)
                 {
                     _webRequest.ContentLength = _postData.Length;
                     _webRequest.Method = WebRequestMethods.Http.Post;
-                    using (Stream requestStream = _webRequest.GetRequestStream())
+                    using (var requestStream = _webRequest.GetRequestStream())
                     {
                         requestStream.Write(_postData, 0, _postData.Length);
                     }
@@ -135,7 +135,7 @@ namespace Mapsui.Providers.Wfs.Utilities
                 else
                     _webRequest.Method = WebRequestMethods.Http.Get;
 
-                _webResponse = (HttpWebResponse) _webRequest.GetResponse();
+                _webResponse = (HttpWebResponse)_webRequest.GetResponse();
                 return _webResponse.GetResponseStream();
             }
             catch (Exception ex)
@@ -164,14 +164,11 @@ namespace Mapsui.Providers.Wfs.Utilities
             if (_webResponse != null)
             {
                 // ATTENTION: Dispose first the Response Stream
-                // or else a disposed exception occours.
+                // or else a disposed exception occurs.
                 var responseStream = _webResponse?.GetResponseStream();
-                if (responseStream != null)
-                {
-                    responseStream.Dispose();
-                }
+                responseStream?.Dispose();
                 _webResponse?.Close();
-                
+
                 _webResponse = null;
             }
         }

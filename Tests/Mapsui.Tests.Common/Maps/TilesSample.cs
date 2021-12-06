@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using BruTile;
-using Mapsui.Geometries;
+using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Providers;
 using Mapsui.Samples.Common;
@@ -22,12 +22,21 @@ namespace Mapsui.Tests.Common.Maps
 
         public static Map CreateMap()
         {
+            var layer = CreateLayer();
+
             var map = new Map
             {
-                BackColor = Color.Transparent,
-                Home = n => n.NavigateTo(new Point(-7641856, 4804912), 51116)
+                BackColor = Color.FromString("WhiteSmoke"),
+                Home = n => n.NavigateToFullEnvelope()
             };
 
+            map.Layers.Add(layer);
+
+            return map;
+        }
+
+        private static MemoryLayer CreateLayer()
+        {
             var tileIndexes = new[]
             {
                 new TileIndex(0, 0, 1),
@@ -37,13 +46,13 @@ namespace Mapsui.Tests.Common.Maps
             };
 
             var features = TileIndexToFeatures(tileIndexes, new SampleTileSource());
-            map.Layers.Add(new MemoryLayer {DataSource = new MemoryProvider(features), Name = "Tiles"});
-            return map;
+            var layer = new MemoryLayer { DataSource = new MemoryProvider<RasterFeature>(features), Name = "Tiles" };
+            return layer;
         }
 
-        private static List<IFeature> TileIndexToFeatures(TileIndex[] tileIndexes, ITileSource tileSource)
+        private static List<RasterFeature> TileIndexToFeatures(TileIndex[] tileIndexes, ITileSource tileSource)
         {
-            var features = new List<IFeature>();
+            var features = new List<RasterFeature>();
             foreach (var tileIndex in tileIndexes)
             {
                 var tileInfo = new TileInfo
@@ -53,13 +62,8 @@ namespace Mapsui.Tests.Common.Maps
                         new TileRange(tileIndex.Col, tileIndex.Row), tileIndex.Level, tileSource.Schema)
                 };
 
-                var feature = new Feature
-                {
-                    Geometry = new Raster(new MemoryStream(
-                        tileSource.GetTile(tileInfo)), tileInfo.Extent.ToBoundingBox())
-                };
-
-                features.Add(feature);
+                var raster = new MRaster(new MemoryStream(tileSource.GetTile(tileInfo)), tileInfo.Extent.ToMRect());
+                features.Add(new RasterFeature(raster));
             }
             return features;
         }

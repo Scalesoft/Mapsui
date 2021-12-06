@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using Mapsui.Geometries;
+using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Providers;
 using NUnit.Framework;
@@ -13,17 +13,17 @@ namespace Mapsui.Tests.Layers
     {
         private const string ExceptionMessage = "This exception should return on OnDataChange";
 
-        class FakeProvider : IProvider
+        private class FakeProvider : IProvider<IFeature>
         {
-            public string CRS { get; set; }
-            public IEnumerable<IFeature> GetFeaturesInView(BoundingBox box, double resolution)
+            public string? CRS { get; set; }
+            public IEnumerable<IFeature> GetFeatures(FetchInfo fetchInfo)
             {
                 throw new Exception(ExceptionMessage);
             }
 
-            public BoundingBox GetExtents()
+            public MRect GetExtent()
             {
-                return new BoundingBox(-1, -1, 0, 0);
+                return new MRect(-1, -1, 0, 0);
             }
         }
 
@@ -32,24 +32,25 @@ namespace Mapsui.Tests.Layers
         {
             // arrange
             var provider = new FakeProvider();
-            var imageLayer = new ImageLayer("imageLayer") { DataSource = provider};
+            var imageLayer = new ImageLayer("imageLayer") { DataSource = provider };
             var map = new Map();
             map.Layers.Add(imageLayer);
             var waitHandle = new AutoResetEvent(false);
-            Exception exception = null;
+            Exception? exception = null;
 
-            imageLayer.DataChanged += (sender, args) =>
-            {
+            imageLayer.DataChanged += (_, args) => {
                 exception = args.Error;
                 waitHandle.Go();
             };
 
+            var fetchInfo = new FetchInfo(new MRect(-1, -1, 0, 0), 1, null, ChangeType.Discrete);
+
             // act
-            map.RefreshData(new BoundingBox(-1, -1, 0, 0), 1, ChangeType.Discrete);
+            map.RefreshData(fetchInfo);
 
             // assert
             waitHandle.WaitOne();
-            Assert.AreEqual(ExceptionMessage, exception.Message);
+            Assert.AreEqual(ExceptionMessage, exception?.Message);
         }
     }
 }

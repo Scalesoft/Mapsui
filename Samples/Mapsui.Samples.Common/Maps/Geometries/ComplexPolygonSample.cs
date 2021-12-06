@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
+using Mapsui.Extensions;
 using Mapsui.Geometries;
+using Mapsui.GeometryLayer;
 using Mapsui.Layers;
+using Mapsui.Layers.Tiling;
 using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.UI;
@@ -25,7 +28,7 @@ namespace Mapsui.Samples.Common.Maps
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
             var polygonLayer = CreateLayer();
             map.Layers.Add(polygonLayer);
-            map.Home = n => n.NavigateTo(polygonLayer.Envelope.Centroid, map.Resolutions[15]);
+            map.Home = n => n.NavigateTo(polygonLayer.Extent?.Centroid, map.Resolutions[15]);
             return map;
         }
 
@@ -33,7 +36,7 @@ namespace Mapsui.Samples.Common.Maps
         {
             return new Layer("Polygons")
             {
-                DataSource = new MemoryProvider(CreatePolygon()),
+                DataSource = new MemoryProvider<IFeature>(CreatePolygon().ToFeatures()),
                 Style = new VectorStyle
                 {
                     Fill = new Brush(new Color(150, 150, 30, 128)),

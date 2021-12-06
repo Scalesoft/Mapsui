@@ -1,5 +1,5 @@
-﻿using System.Reflection;
-using Mapsui.Geometries;
+﻿using System.Collections.Generic;
+using System.Reflection;
 using Mapsui.Layers;
 using Mapsui.Providers;
 using Mapsui.Samples.Common;
@@ -20,45 +20,45 @@ namespace Mapsui.Tests.Common.Maps
 
         public static Map CreateMap()
         {
-            var map = new Map
-            {
-                BackColor = Color.Transparent,
-                Home = n => n.NavigateTo(new Point(100, 100), 1)
-            };
-            map.Layers.Add(new MemoryLayer
+            var layer = new MemoryLayer
             {
                 Style = null,
-                DataSource = new MemoryProvider(CreateFeatures()),
+                DataSource = new MemoryProvider<IFeature>(CreateFeatures()),
                 Name = "Points with bitmaps"
-            });
+            };
+
+            var map = new Map
+            {
+                BackColor = Color.FromString("WhiteSmoke"),
+                Home = n => n.NavigateTo(layer.Extent?.Grow(layer.Extent.Width * 2))
+            };
+
+            map.Layers.Add(layer);
+
             return map;
         }
 
-        public static Features CreateFeatures()
+        public static IEnumerable<IFeature> CreateFeatures()
         {
             var circleIconId = LoadBitmap("Mapsui.Tests.Common.Resources.Images.circle.png");
             var checkeredIconId = LoadBitmap("Mapsui.Tests.Common.Resources.Images.checkered.png");
 
-            return new Features
+            return new List<IFeature>
             {
-                new Feature
+                new PointFeature(new MPoint(50, 50))
                 {
-                    Geometry = new Point(50, 50),
                     Styles = new[] {new VectorStyle {Fill = new Brush(Color.Red)}}
                 },
-                new Feature
+                new PointFeature(new MPoint(50, 100))
                 {
-                    Geometry = new Point(50, 100),
                     Styles = new[] {new SymbolStyle {BitmapId = circleIconId}}
                 },
-                new Feature
+                new PointFeature(new MPoint(100, 50))
                 {
-                    Geometry = new Point(100, 50),
                     Styles = new[] {new SymbolStyle {BitmapId = checkeredIconId}}
                 },
-                new Feature
+                new PointFeature(new MPoint(100, 100))
                 {
-                    Geometry = new Point(100, 100),
                     Styles = new[] {new VectorStyle {Fill = new Brush(Color.Green), Outline = null}}
                 }
             };

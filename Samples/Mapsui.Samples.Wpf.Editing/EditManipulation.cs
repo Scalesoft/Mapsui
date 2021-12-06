@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
+using Mapsui.Extensions;
 using Mapsui.Samples.Wpf.Editing.Editing;
-using Mapsui.Geometries;
 using Mapsui.UI.Wpf;
 
 namespace Mapsui.Samples.Wpf.Editing
@@ -17,12 +17,12 @@ namespace Mapsui.Samples.Wpf.Editing
 
     public class EditManipulation
     {
-        private Point _mouseDownPosition;
+        private MPoint? _mouseDownPosition;
         private bool _inDoubleClick;
 
         public static int MinPixelsMovedForDrag { get; set; } = 4;
 
-        public bool Manipulate(MouseState mouseState, Point screenPosition,
+        public bool Manipulate(MouseState mouseState, MPoint screenPosition,
             EditManager editManager, MapControl mapControl)
         {
             switch (mouseState)
@@ -53,44 +53,44 @@ namespace Mapsui.Samples.Wpf.Editing
                             return editManager.TryInsertVertex(
                                 mapControl.GetMapInfo(screenPosition, editManager.VertexRadius));
                         }
-                        return editManager.AddVertex(mapControl.Viewport.ScreenToWorld(screenPosition));
+                        return editManager.AddVertex(mapControl.Viewport.ScreenToWorld(screenPosition).ToPoint());
                     }
                     return false;
                 case MouseState.Down:
-                {
-                    _mouseDownPosition = screenPosition;
+                    {
+                        _mouseDownPosition = screenPosition;
                         // Take into account VertexRadius in feature select, because the objective
                         // is vertext select.
-                    var mapInfo = mapControl.GetMapInfo(screenPosition, editManager.VertexRadius);
-                    if (editManager.EditMode == EditMode.Modify && mapInfo.Feature != null)
-                    {
-                        return editManager.StartDragging(mapInfo, editManager.VertexRadius);
+                        var mapInfo = mapControl.GetMapInfo(screenPosition, editManager.VertexRadius);
+                        if (editManager.EditMode == EditMode.Modify && mapInfo?.Feature != null)
+                        {
+                            return editManager.StartDragging(mapInfo, editManager.VertexRadius);
+                        }
+                        if (editManager.EditMode == EditMode.Rotate && mapInfo?.Feature != null)
+                        {
+                            return editManager.StartRotating(mapInfo);
+                        }
+                        if (editManager.EditMode == EditMode.Scale && mapInfo?.Feature != null)
+                        {
+                            return editManager.StartScaling(mapInfo);
+                        }
+                        return false;
                     }
-                    if (editManager.EditMode == EditMode.Rotate && mapInfo.Feature != null)
-                    {
-                        return editManager.StartRotating(mapInfo);
-                    }
-                    if (editManager.EditMode == EditMode.Scale && mapInfo.Feature != null)
-                    {
-                        return editManager.StartScaling(mapInfo);
-                    }
-                    return false;
-                }
                 case MouseState.Dragging:
-                {
-                    var args = mapControl.GetMapInfo(screenPosition);
-                    if (editManager.EditMode == EditMode.Modify)
-                        return editManager.Dragging(args.WorldPosition);
-                    if (editManager.EditMode == EditMode.Rotate)
-                        return editManager.Rotating(args.WorldPosition);
-                    if (editManager.EditMode == EditMode.Scale)
-                        return editManager.Scaling(args.WorldPosition);
+                    {
+                        var args = mapControl.GetMapInfo(screenPosition);
+                        if (editManager.EditMode == EditMode.Modify)
+                            return editManager.Dragging(args?.WorldPosition?.ToPoint());
+                        if (editManager.EditMode == EditMode.Rotate)
+                            return editManager.Rotating(args?.WorldPosition?.ToPoint());
+                        if (editManager.EditMode == EditMode.Scale)
+                            return editManager.Scaling(args?.WorldPosition?.ToPoint());
 
                         return false;
-                }
+                    }
                 case MouseState.Moving:
-                    editManager.HoveringVertex(mapControl.GetMapInfo(screenPosition));
-                    return false; 
+                    editManager.HoveringVertex(mapControl?.GetMapInfo(screenPosition));
+                    return false;
                 case MouseState.DoubleClick:
                     _inDoubleClick = true;
                     if (editManager.EditMode != EditMode.Modify)
@@ -106,10 +106,10 @@ namespace Mapsui.Samples.Wpf.Editing
             return Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
         }
 
-        private static bool IsClick(Point screenPosition, Point mouseDownScreenPosition)
+        private static bool IsClick(MPoint? screenPosition, MPoint? mouseDownScreenPosition)
         {
-	        if (mouseDownScreenPosition == null || screenPosition == null)
-		        return false;
+            if (mouseDownScreenPosition == null || screenPosition == null)
+                return false;
             return mouseDownScreenPosition.Distance(screenPosition) < MinPixelsMovedForDrag;
         }
     }

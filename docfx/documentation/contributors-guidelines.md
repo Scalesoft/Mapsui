@@ -37,3 +37,13 @@ exmple nuspec
 
 ## Keep our direct and indirect dependencies in sync
 When we have direct and indirect dependecies on a nuget package those should all refer to the same version. For instance we have a direct dependency on SkiaSharp, but we also use  SvgSkia and RichTextKit and those have a dependency on SkiaSharp too. It would be optimal if all referred to the same version of SkiaSharp. This might not always be possible.
+
+## Extension methods
+- Extension methods should always be in a Extensions folder. 
+- They should be in a class that has the name '{ClassItExtents}Extensions'. 
+- It should be in a namespace that follows the folder name (so not in the namespace of the class it extents).
+
+## Ordering of lon lat
+- In our code we prefor a lon, lat order consistent with the x, y order of most cartographic projections.
+- Some background: The order of lon and lat always causes a lot of confusion. The official notation is lat, lon, but in map projections the lat corresponds to the y-axis and the lon to the x-axis. This is confusing because in math the ordering is the other way around: x, y. In our code we need to translate the lat/lon to an X/Y coordinate to draw it on the map. In the constructor of such a point the x (lon) will be the first parameter. There is no way that this problem can be fundamentally solved, there will always be some confusion. To mitigate it we choose one way of ordering which is lon, lat (consistent with x, y). 
+- Also there are many ways in which we can avoid ordering altogher. For instance if we work with Longitude and Latitude properties. In the case of SphericalMercator.FromLonLat we use lon/lat in the method name to avoid confusion.

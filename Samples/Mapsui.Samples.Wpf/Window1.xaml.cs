@@ -5,7 +5,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using Mapsui.Extensions;
 using Mapsui.Logging;
+using Mapsui.Providers;
 using Mapsui.Samples.CustomWidget;
 using Mapsui.Samples.Wpf.Utilities;
 using Mapsui.UI;
@@ -24,7 +26,7 @@ namespace Mapsui.Samples.Wpf
 
             MapControl.FeatureInfo += MapControlFeatureInfo;
             MapControl.MouseMove += MapControlOnMouseMove;
-            MapControl.Map.RotationLock = false;
+            MapControl.Map!.RotationLock = false;
             MapControl.UnSnapRotationDegrees = 30;
             MapControl.ReSnapRotationDegrees = 5;
             MapControl.Renderer.WidgetRenders[typeof(CustomWidget.CustomWidget)] = new CustomWidgetSkiaRenderer();
@@ -32,27 +34,12 @@ namespace Mapsui.Samples.Wpf
             Logger.LogDelegate += LogMethod;
 
             CategoryComboBox.SelectionChanged += CategoryComboBoxSelectionChanged;
-            RenderMode.SelectionChanged += RenderModeOnSelectionChanged;
 
             FillComboBoxWithCategories();
             FillListWithSamples();
         }
-        
-        private void RenderModeOnSelectionChanged(object sender, SelectionChangedEventArgs selectionChangedEventArgs)
-        {
-            var selectedValue = ((ComboBoxItem)((ComboBox)sender).SelectedItem).Content.ToString();
 
-            if (selectedValue.ToLower().Contains("wpf"))
-            {
-                MapControl.RenderMode = UI.Wpf.RenderMode.Wpf;
-                if (!((Rendering.Xaml.MapRenderer)MapControl.Renderer).StyleRenderers.ContainsKey(typeof(Common.Maps.CustomStyle)))
-                    ((Rendering.Xaml.MapRenderer)MapControl.Renderer).StyleRenderers.Add(typeof(Common.Maps.CustomStyle), new XamlCustomStyleRenderer());
-            }
-            else if (selectedValue.ToLower().Contains("skia"))
-                MapControl.RenderMode = UI.Wpf.RenderMode.Skia;
-            else
-                throw new Exception("Unknown ComboBox item");
-        }
+
 
         private void MapControlOnMouseMove(object sender, MouseEventArgs e)
         {
@@ -77,7 +64,7 @@ namespace Mapsui.Samples.Wpf
         {
             FillListWithSamples();
         }
-        
+
         private void FillComboBoxWithCategories()
         {
             // todo: find proper way to load assembly
@@ -102,21 +89,21 @@ namespace Mapsui.Samples.Wpf
                 Margin = new Thickness(4)
             };
 
-            radioButton.Click += (s, a) =>
-            {
-                MapControl.Map.Layers.Clear();
+            radioButton.Click += (s, a) => {
+                MapControl.Map?.Layers.Clear();
 
                 sample.Setup(MapControl);
 
                 MapControl.Info += MapControlOnInfo;
-                LayerList.Initialize(MapControl.Map.Layers);
+                if (MapControl.Map != null)
+                    LayerList.Initialize(MapControl.Map.Layers);
             };
             return radioButton;
         }
 
         readonly LimitedQueue<LogModel> _logMessage = new LimitedQueue<LogModel>(6);
 
-        private void LogMethod(LogLevel logLevel, string message, Exception exception)
+        private void LogMethod(LogLevel logLevel, string? message, Exception? exception)
         {
             _logMessage.Enqueue(new LogModel { Exception = exception, LogLevel = logLevel, Message = message });
             Dispatcher.Invoke(() => LogTextBox.Text = ToMultiLineString(_logMessage));
@@ -136,11 +123,11 @@ namespace Mapsui.Samples.Wpf
             return result.ToString();
         }
 
-        private static void MapControlFeatureInfo(object sender, FeatureInfoEventArgs e)
+        private static void MapControlFeatureInfo(object? sender, FeatureInfoEventArgs e)
         {
-            MessageBox.Show(e.FeatureInfo.ToDisplayText());
+            MessageBox.Show(e.FeatureInfo?.ToDisplayText());
         }
-        
+
         private void RotationSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             var percent = RotationSlider.Value / (RotationSlider.Maximum - RotationSlider.Minimum);
@@ -148,7 +135,7 @@ namespace Mapsui.Samples.Wpf
             MapControl.Refresh();
         }
 
-        private void MapControlOnInfo(object sender, MapInfoEventArgs args)
+        private void MapControlOnInfo(object? sender, MapInfoEventArgs args)
         {
             if (args.MapInfo?.Feature != null)
             {

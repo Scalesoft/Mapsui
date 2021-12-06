@@ -2,12 +2,13 @@
 // This file can be redistributed and/or modified under the terms of the GNU Lesser General Public License.
 
 using System.Collections.Generic;
-using Mapsui.Geometries;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Web;
 using System.Xml;
+using Mapsui.Geometries;
+using Mapsui.Projections;
 using Mapsui.Utilities;
 
 // ReSharper disable InconsistentNaming
@@ -16,7 +17,7 @@ namespace Mapsui.Providers.Wfs.Utilities
 {
     public class WFS_1_1_0_TextResources : WFS_1_1_0_XPathTextResources, IWFS_TextResources
     {
-        
+
         ////////////////////////////////////////////////////////////////////////
         // HTTP Configuration                                                 //                      
         // POST & GET                                                         //
@@ -47,10 +48,10 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// <param name="labelProperties"></param>
         /// <param name="boundingBox">The bounding box of the query</param>
         /// <param name="filter">An instance implementing <see cref="IFilter"/></param>
-        public string GetFeatureGETRequest(WfsFeatureTypeInfo featureTypeInfo, List<string> labelProperties,
-                                           BoundingBox boundingBox, IFilter filter)
+        public string GetFeatureGETRequest(WfsFeatureTypeInfo featureTypeInfo, List<string>? labelProperties,
+                                           BoundingBox? boundingBox, IFilter? filter)
         {
-            string qualification = string.IsNullOrEmpty(featureTypeInfo.Prefix)
+            var qualification = string.IsNullOrEmpty(featureTypeInfo.Prefix)
                 ? string.Empty
                 : featureTypeInfo.Prefix + ":";
 
@@ -59,9 +60,10 @@ namespace Mapsui.Providers.Wfs.Utilities
             paramBuilder.Append("?SERVICE=WFS&Version=1.1.0&REQUEST=GetFeature&TYPENAME=");
             paramBuilder.Append(HttpUtility.UrlEncode(qualification + featureTypeInfo.Name));
             paramBuilder.Append("&srsName=");
-            paramBuilder.Append(HttpUtility.UrlEncode(ProjectionHelper.EpsgPrefix + featureTypeInfo.SRID));
-            
-            if (filter != null || boundingBox != null) {
+            paramBuilder.Append(HttpUtility.UrlEncode(CrsHelper.EpsgPrefix + featureTypeInfo.SRID));
+
+            if (filter != null || boundingBox != null)
+            {
                 paramBuilder.Append("&FILTER=");
 
                 using var sWriter = new StringWriter();
@@ -88,10 +90,10 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// <param name="labelProperties">A list of properties necessary for label rendering</param>
         /// <param name="boundingBox">The bounding box of the query</param>
         /// <param name="filter">An instance implementing <see cref="IFilter"/></param>
-        public byte[] GetFeaturePOSTRequest(WfsFeatureTypeInfo featureTypeInfo, List<string> labelProperties,
-                                            BoundingBox boundingBox, IFilter filter)
+        public byte[] GetFeaturePOSTRequest(WfsFeatureTypeInfo featureTypeInfo, List<string>? labelProperties,
+                                            BoundingBox? boundingBox, IFilter? filter)
         {
-            string qualification = string.IsNullOrEmpty(featureTypeInfo.Prefix)
+            var qualification = string.IsNullOrEmpty(featureTypeInfo.Prefix)
                                        ? string.Empty
                                        : featureTypeInfo.Prefix + ":";
 
@@ -110,14 +112,14 @@ namespace Mapsui.Providers.Wfs.Utilities
                     //added by PDD to get it to work for degree default sample
                     xWriter.WriteStartElement("Query", NSWFS);
                     xWriter.WriteAttributeString("typeName", qualification + featureTypeInfo.Name);
-                    xWriter.WriteAttributeString("srsName", ProjectionHelper.EpsgPrefix + featureTypeInfo.SRID);
+                    xWriter.WriteAttributeString("srsName", CrsHelper.EpsgPrefix + featureTypeInfo.SRID);
                     xWriter.WriteElementString("PropertyName", qualification + featureTypeInfo.Geometry.GeometryName);
-                    if (!labelProperties.All(string.IsNullOrWhiteSpace))
-                        xWriter.WriteElementString("PropertyName", string.Join(",", 
+                    if (labelProperties != null && !labelProperties.All(string.IsNullOrWhiteSpace))
+                        xWriter.WriteElementString("PropertyName", string.Join(",",
                             labelProperties.Where(x => !string.IsNullOrWhiteSpace(x)).Select(lbl => qualification + lbl)));
 
                     AppendGml3Filter(xWriter, featureTypeInfo, boundingBox, filter, qualification);
-                    
+
                     xWriter.WriteEndElement();
                     xWriter.WriteEndElement();
                     xWriter.Flush();
@@ -126,8 +128,8 @@ namespace Mapsui.Providers.Wfs.Utilities
             }
         }
 
-        private void AppendGml3Filter(XmlTextWriter xWriter, WfsFeatureTypeInfo featureTypeInfo, BoundingBox boundingBox,
-            IFilter filter, string qualification)
+        private void AppendGml3Filter(XmlTextWriter xWriter, WfsFeatureTypeInfo featureTypeInfo, BoundingBox? boundingBox,
+            IFilter? filter, string qualification)
         {
             xWriter.WriteStartElement("Filter", NSOGC);
             if (filter != null && boundingBox != null) xWriter.WriteStartElement("And");

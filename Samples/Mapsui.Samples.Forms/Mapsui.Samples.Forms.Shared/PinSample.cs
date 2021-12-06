@@ -1,12 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using Mapsui.Rendering.Skia;
+using Mapsui.Extensions;
 using Mapsui.Samples.Common;
 using Mapsui.Samples.Common.Maps;
+using Mapsui.Styles;
 using Mapsui.UI;
 using Mapsui.UI.Forms;
 using Xamarin.Forms;
+using Color = Xamarin.Forms.Color;
 
 namespace Mapsui.Samples.Forms.Shared
 {
@@ -19,10 +21,13 @@ namespace Mapsui.Samples.Forms.Shared
 
         public string Category => "Forms";
 
-        public bool OnClick(object sender, EventArgs args)
+        public bool OnClick(object? sender, EventArgs args)
         {
-            var mapView = (MapView)sender;
+            var mapView = sender as MapView;
             var mapClickedArgs = (MapClickedEventArgs)args;
+
+            if (mapView == null)
+                return false;
 
             var assembly = typeof(AllSamples).GetTypeInfo().Assembly;
             foreach (var str in assembly.GetManifestResourceNames())
@@ -71,17 +76,20 @@ namespace Mapsui.Samples.Forms.Shared
                         pin.Callout.Type = CalloutType.Detail;
                         pin.Callout.Content = 1;
                     }
-                    pin.Callout.CalloutClicked += (s, e) =>
-                    {
+                    pin.Callout.CalloutClicked += (s, e) => {
                         if (e.NumOfTaps == 2)
                         {
                             // Double click on callout moves pin
-                            var p = e.Callout.Pin;
-                            p.Position = new Position(p.Position.Latitude + 0.01, p.Position.Longitude);
-                            e.Handled = true;
+                            var p = e.Callout?.Pin;
+                            if (p != null)
+                            {
+                                p.Position = new Position(p.Position.Latitude + 0.01, p.Position.Longitude);
+                                e.Handled = true;
+                            }
+
                             return;
                         }
-                        if (e.Callout.Title != "You clicked me!")
+                        if (e.Callout != null && e.Callout.Title != "You clicked me!")
                         {
                             e.Callout.Type = CalloutType.Single;
                             e.Callout.Title = "You clicked me!";

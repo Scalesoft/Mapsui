@@ -3,7 +3,7 @@ using BruTile.Predefined;
 
 namespace Mapsui.Tests.Common
 {
-    class SampleTileSource : ITileSource
+    internal class SampleTileSource : ITileSource
     {
         public SampleTileSource()
         {
@@ -20,7 +20,7 @@ namespace Mapsui.Tests.Common
         {
             return Provider.GetTile(tileInfo);
         }
-        
+
         public static ITileSchema GetTileSchema()
         {
             var schema = new GlobalSphericalMercator(YAxis.TMS);

@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
+using Mapsui.Extensions;
 using Mapsui.Geometries;
+using Mapsui.GeometryLayer;
 using Mapsui.Layers;
+using Mapsui.Layers.Tiling;
 using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.UI;
-using Mapsui.Utilities;
 
 namespace Mapsui.Samples.Common.Maps
 {
@@ -30,7 +32,7 @@ namespace Mapsui.Samples.Common.Maps
         {
             return new Layer("Polygons")
             {
-                DataSource = new MemoryProvider(CreatePolygon()),
+                DataSource = new MemoryProvider<IFeature>(CreatePolygon().ToFeatures()),
                 Style = new VectorStyle
                 {
                     Fill = new Brush(new Color(150, 150, 30, 128)),
@@ -38,7 +40,7 @@ namespace Mapsui.Samples.Common.Maps
                     {
                         Color = Color.Orange,
                         Width = 2,
-                        PenStyle = PenStyle.DashDotDot, //.Solid,
+                        PenStyle = PenStyle.DashDotDot,
                         PenStrokeCap = PenStrokeCap.Round
                     }
                 }
@@ -50,7 +52,7 @@ namespace Mapsui.Samples.Common.Maps
             var result = new List<Polygon>();
 
             var polygon = new Polygon();
-            polygon.ExteriorRing.Vertices.Add(new Point(0, 0));
+            polygon.ExteriorRing!.Vertices.Add(new Point(0, 0));
             polygon.ExteriorRing.Vertices.Add(new Point(0, 10000000));
             polygon.ExteriorRing.Vertices.Add(new Point(10000000, 10000000));
             polygon.ExteriorRing.Vertices.Add(new Point(10000000, 0));
@@ -66,7 +68,7 @@ namespace Mapsui.Samples.Common.Maps
             result.Add(polygon);
 
             polygon = new Polygon();
-            polygon.ExteriorRing.Vertices.Add(new Point(-10000000, 0));
+            polygon.ExteriorRing!.Vertices.Add(new Point(-10000000, 0));
             polygon.ExteriorRing.Vertices.Add(new Point(-15000000, 5000000));
             polygon.ExteriorRing.Vertices.Add(new Point(-10000000, 10000000));
             polygon.ExteriorRing.Vertices.Add(new Point(-5000000, 5000000));

@@ -504,7 +504,8 @@ raises a CollectionChanged event to any listeners.</p>
   </span>
   <a id="System_Collections_ObjectModel_ObservableRangeCollection_1_InsertRange_" data-uid="System.Collections.ObjectModel.ObservableRangeCollection`1.InsertRange*"></a>
   <h4 id="System_Collections_ObjectModel_ObservableRangeCollection_1_InsertRange_System_Int32_System_Collections_Generic_IEnumerable__0__" data-uid="System.Collections.ObjectModel.ObservableRangeCollection`1.InsertRange(System.Int32,System.Collections.Generic.IEnumerable{`0})">InsertRange(Int32, IEnumerable&lt;T&gt;)</h4>
-  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 summary"><p>Inserts the elements of a collection into the <span class="xref">System.Collections.ObjectModel.ObservableCollection&lt;T&gt;</span> at the specified index.</p>
+</div>
   <div class="markdown level1 conceptual"></div>
   <h5 class="decalaration">Declaration</h5>
   <div class="codewrapper">
@@ -523,12 +524,36 @@ raises a CollectionChanged event to any listeners.</p>
       <tr>
         <td><span class="xref">System.Int32</span></td>
         <td><span class="parametername">index</span></td>
-        <td></td>
+        <td><p>The zero-based index at which the new elements should be inserted.</p>
+</td>
       </tr>
       <tr>
         <td><span class="xref">System.Collections.Generic.IEnumerable</span>&lt;T&gt;</td>
         <td><span class="parametername">collection</span></td>
-        <td></td>
+        <td><p>The collection whose elements should be inserted into the List{T}.
+The collection itself cannot be null, but it can contain elements that are null, if type T is a reference type.</p>
+</td>
+      </tr>
+    </tbody>
+  </table>
+  <h5 class="exceptions">Exceptions</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Condition</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="xref">System.ArgumentNullException</span></td>
+        <td><p><code data-dev-comment-type="paramref" class="paramref">collection</code> is null.</p>
+</td>
+      </tr>
+      <tr>
+        <td><span class="xref">System.ArgumentOutOfRangeException</span></td>
+        <td><p><code data-dev-comment-type="paramref" class="paramref">index</code> is not in the collection range.</p>
+</td>
       </tr>
     </tbody>
   </table>
@@ -571,7 +596,7 @@ a collection changed event through this virtual method.</p>
   <div><span class="xref">System.Collections.ObjectModel.ObservableCollection&lt;T&gt;.OnCollectionChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs)</span></div>
   <h5 id="System_Collections_ObjectModel_ObservableRangeCollection_1_OnCollectionChanged_System_Collections_Specialized_NotifyCollectionChangedEventArgs__remarks">Remarks</h5>
   <div class="markdown level1 remarks"><p>When overriding this method, either call its base implementation
-or call <see cref="!:BlockReentrancy"></see> to guard against reentrant collection changes.</p>
+or call <span class="xref">System.Collections.ObjectModel.ObservableCollection&lt;T&gt;.BlockReentrancy()</span> to guard against reentrant collection changes.</p>
 </div>
   <span class="small pull-right mobile-hide">
     <span class="divider">|</span>

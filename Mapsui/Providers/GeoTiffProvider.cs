@@ -6,50 +6,49 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Mapsui.Geometries;
+using Mapsui.Layers;
 using Mapsui.Styles;
 using Bitmap = System.Drawing.Bitmap;
 using Color = System.Drawing.Color;
 
 namespace Mapsui.Providers
 {
-    public class GeoTiffProvider : IProvider
+    public class GeoTiffProvider : IProvider<IFeature>
     {
         private struct TiffProperties
         {
             public double Width;
             public double Height;
-// ReSharper disable NotAccessedField.Local
+            // ReSharper disable NotAccessedField.Local
             public double HResolution;
             public double VResolution;
-// ReSharper restore NotAccessedField.Local
+            // ReSharper restore NotAccessedField.Local
         }
 
         private struct WorldProperties
         {
             public double PixelSizeX;
-// ReSharper disable NotAccessedField.Local
+            // ReSharper disable NotAccessedField.Local
             public double RotationAroundYAxis;
             public double RotationAroundXAxis;
-// ReSharper restore NotAccessedField.Local
+            // ReSharper restore NotAccessedField.Local
             public double PixelSizeY;
             public double XCenterOfUpperLeftPixel;
             public double YCenterOfUpperLeftPixel;
         }
 
-        private const string WorldExtention = ".tfw";
+        private const string WorldExtension = ".tfw";
         private readonly IFeature _feature;
-        private readonly BoundingBox _extent;
+        private readonly MRect _extent;
 
-        public GeoTiffProvider(string tiffPath, List<Color> noDataColors = null)
+        public GeoTiffProvider(string tiffPath, List<Color>? noDataColors = null)
         {
-            MemoryStream data;
             if (!File.Exists(tiffPath))
             {
                 throw new ArgumentException($"Tiff file expected at {tiffPath}");
             }
 
-            string worldPath = GetPathWithoutExtension(tiffPath) + WorldExtention;
+            var worldPath = GetPathWithoutExtension(tiffPath) + WorldExtension;
             if (!File.Exists(worldPath))
             {
                 throw new ArgumentException($"World file expected at {worldPath}");
@@ -59,22 +58,22 @@ namespace Mapsui.Providers
             var worldProperties = LoadWorld(worldPath);
             _extent = CalculateExtent(tiffProperties, worldProperties);
 
-            data = ReadImageAsStream(tiffPath, noDataColors);
-            
-            _feature = new Feature { Geometry = new Raster(data, _extent) };
+            var data = ReadImageAsStream(tiffPath, noDataColors);
+
+            _feature = new RasterFeature(new MRaster(data, _extent));
             _feature.Styles.Add(new VectorStyle());
         }
 
-        private static BoundingBox CalculateExtent(TiffProperties tiffProperties, WorldProperties worldProperties)
+        private static MRect CalculateExtent(TiffProperties tiffProperties, WorldProperties worldProperties)
         {
             var minX = worldProperties.XCenterOfUpperLeftPixel - worldProperties.PixelSizeX * 0.5;
             var maxX = minX + worldProperties.PixelSizeX * tiffProperties.Width + worldProperties.PixelSizeX * 0.5;
             var maxY = worldProperties.YCenterOfUpperLeftPixel + worldProperties.PixelSizeY * 0.5;
             var minY = maxY + worldProperties.PixelSizeY * tiffProperties.Height - worldProperties.PixelSizeY * 0.5;
-            return new BoundingBox(minX, minY, maxX, maxY);
+            return new MRect(minX, minY, maxX, maxY);
         }
 
-        private static MemoryStream ReadImageAsStream(string tiffPath, List<Color> noDataColors)
+        private static MemoryStream ReadImageAsStream(string tiffPath, List<Color>? noDataColors)
         {
             var img = Image.FromFile(tiffPath);
             var imageStream = new MemoryStream();
@@ -93,16 +92,13 @@ namespace Mapsui.Providers
         {
             TiffProperties tiffFileProperties;
 
-            using (var stream = new FileStream(location, FileMode.Open, FileAccess.Read))
-            {
-                using (var tif = Image.FromStream(stream, false, false))
-                {
-                    tiffFileProperties.Width = tif.PhysicalDimension.Width;
-                    tiffFileProperties.Height = tif.PhysicalDimension.Height;
-                    tiffFileProperties.HResolution = tif.HorizontalResolution;
-                    tiffFileProperties.VResolution = tif.VerticalResolution;
-                }
-            }
+            using var stream = new FileStream(location, FileMode.Open, FileAccess.Read);
+            using var tif = Image.FromStream(stream, false, false);
+            tiffFileProperties.Width = tif.PhysicalDimension.Width;
+            tiffFileProperties.Height = tif.PhysicalDimension.Height;
+            tiffFileProperties.HResolution = tif.HorizontalResolution;
+            tiffFileProperties.VResolution = tif.VerticalResolution;
+
             return tiffFileProperties;
         }
 
@@ -161,8 +157,8 @@ namespace Mapsui.Providers
                 var a = argbValues[counter + 3];
 
                 var found = filterValues.Any(
-                    filterValue => filterValue[0] == a && 
-                    filterValue[1] == r && filterValue[2] == g && 
+                    filterValue => filterValue[0] == a &&
+                    filterValue[1] == r && filterValue[2] == g &&
                     filterValue[3] == b);
 
                 if (found)
@@ -178,34 +174,28 @@ namespace Mapsui.Providers
         private static WorldProperties LoadWorld(string location)
         {
             WorldProperties worldProperties;
-            using (TextReader reader = File.OpenText(location))
-            {
-                worldProperties.PixelSizeX = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
-                worldProperties.RotationAroundYAxis = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
-                worldProperties.RotationAroundXAxis = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
-                worldProperties.PixelSizeY = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
-                worldProperties.XCenterOfUpperLeftPixel = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
-                worldProperties.YCenterOfUpperLeftPixel = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
-            }
+            using TextReader reader = File.OpenText(location);
+            worldProperties.PixelSizeX = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
+            worldProperties.RotationAroundYAxis = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
+            worldProperties.RotationAroundXAxis = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
+            worldProperties.PixelSizeY = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
+            worldProperties.XCenterOfUpperLeftPixel = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
+            worldProperties.YCenterOfUpperLeftPixel = Convert.ToDouble(reader.ReadLine()?.Replace(',', '.'), CultureInfo.InvariantCulture);
             return worldProperties;
         }
 
-        public void Dispose()
-        {
-        }
+        public string? CRS { get; set; } = "";
 
-        public string CRS { get; set; }
-
-        public IEnumerable<IFeature> GetFeaturesInView(BoundingBox box, double resolution)
+        public IEnumerable<IFeature> GetFeatures(FetchInfo fetchInfo)
         {
-            if (_extent.Intersects(box))
+            if (_extent.Intersects(fetchInfo.Extent))
             {
                 return new[] { _feature };
             }
-            return new Features();
+            return new List<IFeature>();
         }
 
-        public BoundingBox GetExtents()
+        public MRect? GetExtent()
         {
             return _extent;
         }
@@ -218,9 +208,9 @@ namespace Mapsui.Providers
                 Path.GetFileNameWithoutExtension(path);
         }
 
-        public bool? IsCrsSupported(string crs)
+        public bool? IsCrsSupported(string? crs)
         {
-            return String.Equals(crs.Trim(), CRS.Trim(), StringComparison.CurrentCultureIgnoreCase);
+            return string.Equals(crs?.Trim(), CRS?.Trim(), StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }

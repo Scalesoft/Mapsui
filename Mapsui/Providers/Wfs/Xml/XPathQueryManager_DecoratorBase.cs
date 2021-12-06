@@ -14,11 +14,11 @@ namespace Mapsui.Providers.Wfs.Xml
     /// </summary>
     public abstract class XPathQueryManagerDecoratorBase
     {
-        
+
         protected IXPathQueryManager XPathQueryManager;
 
-        
-        
+
+
         /// <summary>
         /// Protected constructor for the abstract class.
         /// </summary>
@@ -28,8 +28,8 @@ namespace Mapsui.Providers.Wfs.Xml
             XPathQueryManager = xPathQueryManager;
         }
 
-        
-        
+
+
         /// <summary>
         /// This method invokes the corresponding method of the inherent <see cref="IXPathQueryManager"/> instance.
         /// </summary>
@@ -45,7 +45,7 @@ namespace Mapsui.Providers.Wfs.Xml
         /// </summary>
         /// <param name="xPath">An XPath string</param>
         /// <returns>A compiled XPath expression</returns>
-        public virtual XPathExpression Compile(string xPath)
+        public virtual XPathExpression? Compile(string xPath)
         {
             return XPathQueryManager.Compile(xPath);
         }
@@ -59,7 +59,7 @@ namespace Mapsui.Providers.Wfs.Xml
         /// This method invokes the corresponding method of the inherent <see cref="IXPathQueryManager"/> instance.
         /// </summary>
         /// <param name="xPath">A compiled XPath expression</param>
-        public virtual XPathNodeIterator GetIterator(XPathExpression xPath)
+        public virtual XPathNodeIterator? GetIterator(XPathExpression? xPath)
         {
             return XPathQueryManager.GetIterator(xPath);
         }
@@ -69,18 +69,20 @@ namespace Mapsui.Providers.Wfs.Xml
         /// </summary>
         /// <param name="xPath">A compiled XPath expression</param>
         /// <param name="queryParameters">Parameters for the compiled XPath expression</param>
-        public virtual XPathNodeIterator GetIterator(XPathExpression xPath, DictionaryEntry[] queryParameters)
+        public virtual XPathNodeIterator? GetIterator(XPathExpression xPath, DictionaryEntry[] queryParameters)
         {
             return XPathQueryManager.GetIterator(xPath, queryParameters);
         }
-        
+
         /// <summary>
         /// This method invokes the corresponding method of the inherent <see cref="IXPathQueryManager"/> instance.
         /// </summary>
         /// <param name="xPath">A compiled XPath expression</param>
         /// <param name="queryParameters">Parameters for the compiled XPath expression</param>
-        public virtual string GetValueFromNode(XPathExpression xPath, DictionaryEntry[] queryParameters = null)
+        public virtual string? GetValueFromNode(XPathExpression? xPath, DictionaryEntry[]? queryParameters = null)
         {
+            if (xPath == null)
+                return null;
             if (queryParameters == null) return XPathQueryManager.GetValueFromNode(xPath);
             return XPathQueryManager.GetValueFromNode(xPath, queryParameters);
         }
@@ -90,8 +92,8 @@ namespace Mapsui.Providers.Wfs.Xml
         /// </summary>
         /// <param name="xPath">A compiled XPath expression</param>
         /// <param name="queryParameters">Parameters for the compiled XPath expression</param>
-        public abstract IXPathQueryManager GetXPathQueryManagerInContext(XPathExpression xPath,
-                                                                         DictionaryEntry[] queryParameters = null);
+        public abstract IXPathQueryManager? GetXPathQueryManagerInContext(XPathExpression xPath,
+                                                                         DictionaryEntry[]? queryParameters = null);
 
         /// <summary>
         /// This method invokes the corresponding method of the inherent <see cref="IXPathQueryManager"/> instance.
@@ -119,5 +121,5 @@ namespace Mapsui.Providers.Wfs.Xml
             XPathQueryManager.SetDocumentToParse(httpClientUtil);
         }
 
-            }
+    }
 }

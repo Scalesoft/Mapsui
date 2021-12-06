@@ -1,27 +1,30 @@
-﻿using Mapsui.Styles;
+﻿using System;
+using Mapsui.Styles;
 using SkiaSharp;
-using System;
 
 namespace Mapsui.Rendering.Skia
 {
-    class BitmapRenderer
+    internal class BitmapRenderer
     {
         // The field below is static for performance. Effect has not been measured.
         // Note that the default FilterQuality is None. Setting it explicitly to Low increases the quality.
         private static readonly SKPaint DefaultPaint = new SKPaint { FilterQuality = SKFilterQuality.Low };
-        
+
         public static void Draw(SKCanvas canvas, SKImage bitmap, SKRect rect, float layerOpacity = 1f)
         {
             canvas.DrawImage(bitmap, rect, GetPaint(layerOpacity));
         }
 
-        public static void Draw(SKCanvas canvas, SKImage bitmap, float x, float y, float rotation = 0,
+        public static void Draw(SKCanvas canvas, SKImage? bitmap, float x, float y, float rotation = 0,
             float offsetX = 0, float offsetY = 0,
             LabelStyle.HorizontalAlignmentEnum horizontalAlignment = LabelStyle.HorizontalAlignmentEnum.Center,
             LabelStyle.VerticalAlignmentEnum verticalAlignment = LabelStyle.VerticalAlignmentEnum.Center,
             float opacity = 1f,
             float scale = 1f)
         {
+            if (bitmap == null)
+                return;
+
             canvas.Save();
 
             canvas.Translate(x, y);

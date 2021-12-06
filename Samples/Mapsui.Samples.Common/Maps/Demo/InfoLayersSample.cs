@@ -1,11 +1,15 @@
 ﻿using System.Collections.Generic;
 using Mapsui.Geometries;
+using Mapsui.GeometryLayer;
 using Mapsui.Layers;
+using Mapsui.Layers.Tiling;
 using Mapsui.Providers;
 using Mapsui.Samples.Common.Helpers;
 using Mapsui.Styles;
 using Mapsui.UI;
 using Mapsui.Utilities;
+
+#pragma warning disable CS8670 // Object or collection initializer implicitly dereferences possibly null member.
 
 namespace Mapsui.Samples.Common.Maps
 {
@@ -27,18 +31,18 @@ namespace Mapsui.Samples.Common.Maps
             var map = new Map();
 
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
-            map.Layers.Add(CreateInfoLayer(map.Envelope));
+            map.Layers.Add(CreateInfoLayer(map.Extent));
             map.Layers.Add(CreatePolygonLayer());
             map.Layers.Add(new WritableLayer());
             map.Layers.Add(CreateLineLayer());
-            
+
             return map;
         }
 
         private static ILayer CreatePolygonLayer()
         {
-            var features = new Features { CreatePolygonFeature(), CreateMultiPolygonFeature() };
-            var provider = new MemoryProvider(features);
+            var features = new List<IFeature> { CreatePolygonFeature(), CreateMultiPolygonFeature() };
+            var provider = new MemoryProvider<IFeature>(features);
 
             var layer = new MemoryLayer
             {
@@ -56,15 +60,15 @@ namespace Mapsui.Samples.Common.Maps
             return new MemoryLayer
             {
                 Name = LineLayerName,
-                DataSource = new MemoryProvider(CreateLineFeature()),
+                DataSource = new MemoryProvider<IFeature>(CreateLineFeature()),
                 Style = null,
                 IsMapInfoLayer = true
             };
         }
 
-        private static Feature CreateMultiPolygonFeature()
+        private static GeometryFeature CreateMultiPolygonFeature()
         {
-            var feature = new Feature
+            var feature = new GeometryFeature
             {
                 Geometry = CreateMultiPolygon(),
                 ["Name"] = "Multipolygon 1"
@@ -73,9 +77,9 @@ namespace Mapsui.Samples.Common.Maps
             return feature;
         }
 
-        private static Feature CreatePolygonFeature()
+        private static GeometryFeature CreatePolygonFeature()
         {
-            var feature = new Feature
+            var feature = new GeometryFeature
             {
                 Geometry = CreatePolygon(),
                 ["Name"] = "Polygon 1"
@@ -84,13 +88,13 @@ namespace Mapsui.Samples.Common.Maps
             return feature;
         }
 
-        private static Feature CreateLineFeature()
+        private static GeometryFeature CreateLineFeature()
         {
-            return new Feature
+            return new GeometryFeature
             {
                 Geometry = CreateLine(),
                 ["Name"] = "Line 1",
-                Styles = new List<IStyle> { new VectorStyle{ Line = new Pen(Color.Violet, 6)}}
+                Styles = new List<IStyle> { new VectorStyle { Line = new Pen(Color.Violet, 6) } }
             };
         }
 
@@ -100,7 +104,7 @@ namespace Mapsui.Samples.Common.Maps
             {
                 Polygons = new List<Polygon>
                 {
-                    new Polygon(new LinearRing(new[]
+                    new (new LinearRing(new[]
                     {
                         new Point(4000000, 3000000),
                         new Point(4000000, 2000000),
@@ -109,7 +113,7 @@ namespace Mapsui.Samples.Common.Maps
                         new Point(4000000, 3000000)
                     })),
 
-                    new Polygon(new LinearRing(new[]
+                    new (new LinearRing(new[]
                     {
                         new Point(4000000, 5000000),
                         new Point(4000000, 4000000),
@@ -149,11 +153,11 @@ namespace Mapsui.Samples.Common.Maps
             });
         }
 
-        private static ILayer CreateInfoLayer(BoundingBox envelope)
+        private static ILayer CreateInfoLayer(MRect? envelope)
         {
             return new Layer(InfoLayerName)
             {
-                DataSource = RandomPointHelper.CreateProviderWithRandomPoints(envelope, 25, 7),
+                DataSource = RandomPointGenerator.CreateProviderWithRandomPoints(envelope, 25, 7),
                 Style = CreateSymbolStyle(),
                 IsMapInfoLayer = true
             };

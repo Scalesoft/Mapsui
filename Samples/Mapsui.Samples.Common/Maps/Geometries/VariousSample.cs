@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-using Mapsui.Geometries;
+using Mapsui.Extensions;
 using Mapsui.Layers;
+using Mapsui.Layers.Tiling;
 using Mapsui.Providers;
 using Mapsui.Samples.Common.Helpers;
 using Mapsui.Styles;
 using Mapsui.UI;
-using Mapsui.Utilities;
 
 namespace Mapsui.Samples.Common.Maps
 {
@@ -27,41 +28,36 @@ namespace Mapsui.Samples.Common.Maps
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
             map.Layers.Add(PolygonSample.CreateLayer());
             map.Layers.Add(LineStringSample.CreateLineStringLayer(LineStringSample.CreateLineStringStyle()));
-            map.Layers.Add(CreateLayerWithStyleOnLayer(map.Envelope, 10));
-            map.Layers.Add(CreateLayerWithStyleOnFeature(map.Envelope, 10));
+            map.Layers.Add(CreateLayerWithStyleOnLayer(map.Extent, 10));
+            map.Layers.Add(CreateLayerWithStyleOnFeature(map.Extent, 10));
 
             return map;
         }
 
-        private static ILayer CreateLayerWithStyleOnLayer(BoundingBox envelope, int count = 25)
+        private static ILayer CreateLayerWithStyleOnLayer(MRect? envelope, int count = 25)
         {
             return new Layer("Style on Layer")
             {
-                DataSource = new MemoryProvider(RandomPointHelper.GenerateRandomPoints(envelope, count)),
+                DataSource = new MemoryProvider<PointFeature>(RandomPointGenerator.GenerateRandomPoints(envelope, count).ToFeatures()),
                 Style = CreateBitmapStyle("Mapsui.Samples.Common.Images.ic_place_black_24dp.png")
             };
         }
 
-        private static ILayer CreateLayerWithStyleOnFeature(BoundingBox envelope, int count = 25)
+        private static ILayer CreateLayerWithStyleOnFeature(MRect? envelope, int count = 25)
         {
             var style = CreateBitmapStyle("Mapsui.Samples.Common.Images.loc.png");
 
             return new Layer("Style on feature")
             {
-                DataSource = new MemoryProvider(GenerateRandomFeatures(envelope, count, style)),
+                DataSource = new MemoryProvider<IFeature>(GenerateRandomFeatures(envelope, count, style)),
                 Style = null
             };
         }
 
-        private static IEnumerable<IFeature> GenerateRandomFeatures(BoundingBox envelope, int count, IStyle style)
+        private static IEnumerable<IFeature> GenerateRandomFeatures(MRect? envelope, int count, IStyle style)
         {
-            var result = new List<Feature>();
-            var points = RandomPointHelper.GenerateRandomPoints(envelope, count, 123);
-            foreach (var point in points)
-            {
-                result.Add(new Feature { Geometry = point, Styles = new List<IStyle> { style } });
-            }
-            return result;
+            return RandomPointGenerator.GenerateRandomPoints(envelope, count, 123)
+                .Select(p => new PointFeature(p) { Styles = new List<IStyle> { style } }).ToList();
         }
 
         private static SymbolStyle CreateBitmapStyle(string embeddedResourcePath)

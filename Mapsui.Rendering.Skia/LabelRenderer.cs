@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Mapsui.Geometries;
-using Mapsui.Providers;
+using Mapsui.Rendering.Skia.Extensions;
 using Mapsui.Styles;
 using SkiaSharp;
 
@@ -14,7 +14,7 @@ namespace Mapsui.Rendering.Skia
         private static readonly IDictionary<string, BitmapInfo> LabelCache =
             new Dictionary<string, BitmapInfo>();
 
-        private static readonly SKPaint Paint = new SKPaint
+        private static readonly SKPaint Paint = new()
         {
             IsAntialias = true,
             IsStroke = false,
@@ -49,14 +49,14 @@ namespace Mapsui.Rendering.Skia
             DrawLabel(canvas, (float)destination.X, (float)destination.Y, style, text, layerOpacity);
         }
 
-        private static SKImage CreateLabelAsBitmap(LabelStyle style, string text, float layerOpacity)
+        private static SKImage CreateLabelAsBitmap(LabelStyle style, string? text, float layerOpacity)
         {
             UpdatePaint(style, layerOpacity);
 
             return CreateLabelAsBitmap(style, text, Paint, layerOpacity);
         }
 
-        private static SKImage CreateLabelAsBitmap(LabelStyle style, string text, SKPaint paint, float  layerOpacity)
+        private static SKImage CreateLabelAsBitmap(LabelStyle style, string? text, SKPaint paint, float layerOpacity)
         {
             var rect = new SKRect();
             paint.MeasureText(text, ref rect);
@@ -66,29 +66,29 @@ namespace Mapsui.Rendering.Skia
             var skImageInfo = new SKImageInfo((int)backRect.Width, (int)backRect.Height);
 
             var bitmap = SKImage.Create(skImageInfo);
-            
+
             // todo: Construct SKCanvas with SKImage once this option becomes available
             using (var target = new SKCanvas(SKBitmap.FromImage(bitmap)))
             {
                 target.Clear();
 
                 DrawBackground(style, backRect, target, layerOpacity);
-                target.DrawText(text, -rect.Left + 3, -rect.Top +3, paint);
+                target.DrawText(text, -rect.Left + 3, -rect.Top + 3, paint);
                 return bitmap;
             }
         }
 
-        private static void DrawLabel(SKCanvas target, float x, float y, LabelStyle style, string text, float layerOpacity)
+        private static void DrawLabel(SKCanvas target, float x, float y, LabelStyle style, string? text, float layerOpacity)
         {
             UpdatePaint(style, layerOpacity);
 
             var rect = new SKRect();
 
-            Line[] lines = null;
+            Line[]? lines = null;
 
             float emHeight = 0;
             float maxWidth = 0;
-            bool hasNewline = text.Contains("\n"); // There could be a multi line text by newline
+            var hasNewline = text?.Contains("\n") ?? false; // There could be a multi line text by newline
 
             // Get default values for unit em
             if (style.MaxWidth > 0 || hasNewline)
@@ -137,8 +137,8 @@ namespace Mapsui.Rendering.Skia
                 // Shorten it at begining
                 if (style.WordWrap == LabelStyle.LineBreakMode.HeadTruncation)
                 {
-                    var result = text.Substring(text.Length - (int) style.MaxWidth - 2);
-                    while (result.Length > 1 && Paint.MeasureText("..." + result) > maxWidth)
+                    var result = text?.Substring(text.Length - (int)style.MaxWidth - 2);
+                    while (result?.Length > 1 && Paint.MeasureText("..." + result) > maxWidth)
                         result = result.Substring(1);
                     text = "..." + result;
                     Paint.MeasureText(text, ref rect);
@@ -148,8 +148,8 @@ namespace Mapsui.Rendering.Skia
                 // Shorten it at end
                 if (style.WordWrap == LabelStyle.LineBreakMode.TailTruncation)
                 {
-                    var result = text.Substring(0, (int)style.MaxWidth + 2);
-                    while (result.Length > 1 && Paint.MeasureText(result + "...") > maxWidth)
+                    var result = text?.Substring(0, (int)style.MaxWidth + 2);
+                    while (result?.Length > 1 && Paint.MeasureText(result + "...") > maxWidth)
                         result = result.Substring(0, result.Length - 1);
                     text = result + "...";
                     Paint.MeasureText(text, ref rect);
@@ -159,9 +159,9 @@ namespace Mapsui.Rendering.Skia
                 // Shorten it in the middle
                 if (style.WordWrap == LabelStyle.LineBreakMode.MiddleTruncation)
                 {
-                    var result1 = text.Substring(0, (int)(style.MaxWidth/2) + 1);
-                    var result2 = text.Substring(text.Length - (int)(style.MaxWidth/2) - 1);
-                    while (result1.Length > 1 && result2.Length > 1 &&
+                    var result1 = text?.Substring(0, (int)(style.MaxWidth / 2) + 1);
+                    var result2 = text?.Substring(text.Length - (int)(style.MaxWidth / 2) - 1);
+                    while (result1?.Length > 1 && result2?.Length > 1 &&
                            Paint.MeasureText(result1 + "..." + result2) > maxWidth)
                     {
                         result1 = result1.Substring(0, result1.Length - 1);
@@ -176,7 +176,7 @@ namespace Mapsui.Rendering.Skia
 
             var horizontalAlign = CalcHorizontalAlignment(style.HorizontalAlignment);
             var verticalAlign = CalcVerticalAlignment(style.VerticalAlignment);
-                        
+
             var offsetX = style.Offset.IsRelative ? drawRect.Width * style.Offset.X : style.Offset.X;
             var offsetY = style.Offset.IsRelative ? drawRect.Height * style.Offset.Y : style.Offset.Y;
 
@@ -241,7 +241,7 @@ namespace Mapsui.Rendering.Skia
             if (horizontalAligment == LabelStyle.HorizontalAlignmentEnum.Center) return 0.5f;
             if (horizontalAligment == LabelStyle.HorizontalAlignmentEnum.Left) return 0f;
             if (horizontalAligment == LabelStyle.HorizontalAlignmentEnum.Right) return 1f;
-            throw new ArgumentException(); 
+            throw new ArgumentException();
         }
 
         private static float CalcVerticalAlignment(LabelStyle.VerticalAlignmentEnum verticalAligment)
@@ -254,16 +254,22 @@ namespace Mapsui.Rendering.Skia
 
         private static void DrawBackground(LabelStyle style, SKRect rect, SKCanvas target, float layerOpacity)
         {
-            if (style.BackColor != null)
+            var color = style.BackColor?.Color?.ToSkia(layerOpacity);
+            if (color.HasValue)
             {
-                var color = style.BackColor?.Color?.ToSkia(layerOpacity);
-                if (color.HasValue)
+                var rounding = style.CornerRounding;
+                using var backgroundPaint = new SKPaint { Color = color.Value };
+                target.DrawRoundRect(rect, rounding, rounding, backgroundPaint);
+                if (style.BorderThickness > 0 &&
+                    style.BorderColor != Color.Transparent)
                 {
-                    var rounding = 6;
-                    using (var backgroundPaint = new SKPaint {Color = color.Value})
+                    using SKPaint borderPaint = new SKPaint
                     {
-                        target.DrawRoundRect(rect, rounding, rounding, backgroundPaint);
-                    }
+                        Color = style.BorderColor.ToSkia(),
+                        Style = SKPaintStyle.Stroke,
+                        StrokeWidth = (float)style.BorderThickness
+                    };
+                    target.DrawRoundRect(rect, rounding, rounding, borderPaint);
                 }
             }
         }
@@ -272,7 +278,7 @@ namespace Mapsui.Rendering.Skia
 
         private static void UpdatePaint(LabelStyle style, float layerOpacity)
         {
-            if (!CacheTypeface.TryGetValue(style.Font.ToString(), out SKTypeface typeface))
+            if (!CacheTypeface.TryGetValue(style.Font.ToString(), out var typeface))
             {
                 typeface = SKTypeface.FromFamilyName(style.Font.FontFamily,
                     style.Font.Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal,
@@ -282,25 +288,27 @@ namespace Mapsui.Rendering.Skia
             }
 
             Paint.Style = SKPaintStyle.Fill;
-            Paint.TextSize = (float) style.Font.Size;
+            Paint.TextSize = (float)style.Font.Size;
             Paint.Color = style.ForeColor.ToSkia(layerOpacity);
             Paint.Typeface = typeface;
         }
 
         private class Line
         {
-            public string Value { get; set; }
+            public string? Value { get; set; }
             public float Width { get; set; }
             public float Baseline { get; set; }
         }
 
-        private static Line[] SplitLines(string text, SKPaint paint, float maxWidth, string splitCharacter)
+        private static Line[] SplitLines(string? text, SKPaint paint, float maxWidth, string splitCharacter)
         {
+            if (text == null)
+                return Array.Empty<Line>();
+
             var spaceWidth = paint.MeasureText(" ");
             var lines = text.Split('\n');
 
-            return lines.SelectMany((line) =>
-            {
+            return lines.SelectMany((line) => {
                 var result = new List<Line>();
                 string[] words;
 
@@ -311,7 +319,7 @@ namespace Mapsui.Rendering.Skia
                 }
                 else
                 {
-                    words = line.Split(new[] {splitCharacter}, StringSplitOptions.None);
+                    words = line.Split(new[] { splitCharacter }, StringSplitOptions.None);
                 }
 
                 var lineResult = new StringBuilder();

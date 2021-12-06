@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Mapsui.Geometries;
+using Mapsui.GeometryLayer;
 using Mapsui.Layers;
+using Mapsui.Layers.Tiling;
 using Mapsui.Providers;
 using Mapsui.UI;
-using Mapsui.Utilities;
 
 namespace Mapsui.Samples.Common.Maps
 {
@@ -26,23 +27,24 @@ namespace Mapsui.Samples.Common.Maps
         {
             var map = new Map();
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
-            map.Layers.Add(CreateMutatingTriangleLayer(map.Envelope));
+            map.Layers.Add(CreateMutatingTriangleLayer(map.Extent));
             return map;
         }
 
-        private static ILayer CreateMutatingTriangleLayer(BoundingBox envelope)
-        {   
+        private static ILayer CreateMutatingTriangleLayer(MRect? envelope)
+        {
             var layer = new MemoryLayer();
-           
+
             var polygon = new Polygon(new LinearRing(GenerateRandomPoints(envelope, 3)));
-            var feature = new Feature() { Geometry = polygon };
-            var features = new Features();
-            features.Add(feature);
-
-            layer.DataSource = new MemoryProvider(features);
-
-            PeriodicTask.Run(() =>
+            var feature = new GeometryFeature(polygon);
+            var features = new List<IFeature>
             {
+                feature
+            };
+
+            layer.DataSource = new MemoryProvider<IFeature>(features);
+
+            PeriodicTask.Run(() => {
                 polygon.ExteriorRing = new LinearRing(GenerateRandomPoints(envelope, 3));
                 // Clear cache for change to show
                 feature.RenderedGeometry.Clear();
@@ -54,9 +56,11 @@ namespace Mapsui.Samples.Common.Maps
             return layer;
         }
 
-        public static IEnumerable<Point> GenerateRandomPoints(BoundingBox envelope, int count = 25)
+        public static IEnumerable<Point> GenerateRandomPoints(MRect? envelope, int count = 25)
         {
             var result = new List<Point>();
+            if (envelope == null)
+                return result;
 
             for (var i = 0; i < count; i++)
             {

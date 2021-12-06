@@ -1,24 +1,22 @@
 ﻿using System;
-using Mapsui.Geometries;
-using Mapsui.Providers;
+using Mapsui.Extensions;
 using Mapsui.Styles;
 using SkiaSharp;
 
 namespace Mapsui.Rendering.Skia
 {
-    static class PointRenderer
+    internal static class PointRenderer
     {
-        public static void Draw(SKCanvas canvas, IReadOnlyViewport viewport, IStyle style, IFeature feature, 
-            IGeometry geometry, SymbolCache symbolCache, float opacity)
+        public static void Draw(SKCanvas canvas, IReadOnlyViewport viewport, IStyle style, IFeature feature,
+            double x, double y, SymbolCache symbolCache, float opacity)
         {
-            var point = geometry as Point;
-            var destination = viewport.WorldToScreen(point);
+            var destination = viewport.WorldToScreen(x, y).ToPoint();
 
             if (style is CalloutStyle calloutStyle)
             {
                 CalloutStyleRenderer.Draw(canvas, viewport, opacity, destination, calloutStyle);
             }
-            else if (style is LabelStyle labelStyle) 
+            else if (style is LabelStyle labelStyle)
             {
                 LabelRenderer.Draw(canvas, labelStyle, feature, destination, opacity);
             }
@@ -38,7 +36,7 @@ namespace Mapsui.Rendering.Skia
             {
                 ImageStyleRenderer.Draw(canvas, imageStyle, destination, symbolCache, opacity, viewport.Rotation);
             }
-            else if (style is VectorStyle vectorStyle) 
+            else if (style is VectorStyle vectorStyle)
             {
                 // Use the SymbolStyleRenderer and specify Ellipse
                 SymbolStyleRenderer.Draw(canvas, vectorStyle, destination, opacity, SymbolType.Ellipse);

@@ -1,4 +1,5 @@
 ﻿using Mapsui.Layers;
+using Mapsui.Layers.Tiling;
 using Mapsui.Providers;
 using Mapsui.Samples.Common.Helpers;
 using Mapsui.Styles;
@@ -23,13 +24,13 @@ namespace Mapsui.Samples.Common.Maps
         {
             var map = new Map();
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
-            var provider = RandomPointHelper.CreateProviderWithRandomPoints(map.Envelope);
+            var provider = RandomPointGenerator.CreateProviderWithRandomPoints(map.Extent);
             map.Layers.Add(CreateStackedLabelLayer(provider, LabelColumn));
             map.Layers.Add(CreateLayer(provider));
             return map;
         }
 
-        private static ILayer CreateStackedLabelLayer(IProvider provider, string labelColumn)
+        private static ILayer CreateStackedLabelLayer(IProvider<PointFeature> provider, string labelColumn)
         {
             return new MemoryLayer
             {
@@ -37,15 +38,15 @@ namespace Mapsui.Samples.Common.Maps
                 Style = null,
                 DataSource = new StackedLabelProvider(provider, new LabelStyle
                 {
-                    BackColor = new Brush {Color = new Color(240, 240, 240, 128)},
+                    BackColor = new Brush { Color = new Color(240, 240, 240, 128) },
                     ForeColor = new Color(50, 50, 50),
                     LabelColumn = labelColumn,
-                    Font = new Font {  FontFamily = "Cambria", Size = 14}
+                    Font = new Font { FontFamily = "Cambria", Size = 14 }
                 })
             };
         }
 
-        private static ILayer CreateLayer(IProvider dataSource)
+        private static ILayer CreateLayer(IProvider<PointFeature> dataSource)
         {
             return new Layer("Point Layer")
             {

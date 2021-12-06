@@ -17,6 +17,9 @@ namespace Mapsui.Rendering.Skia
             // todo: I assume we also need to apply opacity.
             // todo: It seems horizontalAlignment and verticalAlignment would make sense too. Is this similar to Anchor?
 
+            if (svg.Picture == null)
+                return;
+
             canvas.Save();
 
             canvas.Translate(x, y);
@@ -30,7 +33,7 @@ namespace Mapsui.Rendering.Skia
             canvas.Translate(-halfWidth + offsetX, -halfHeight - offsetY);
 
             var alpha = Convert.ToByte(255 * opacity);
-            var transparency = SKColors.White.WithAlpha(alpha); 
+            var transparency = SKColors.White.WithAlpha(alpha);
             using (var cf = SKColorFilter.CreateBlendMode(transparency, SKBlendMode.DstIn))
             {
                 canvas.DrawPicture(svg.Picture, new SKPaint()

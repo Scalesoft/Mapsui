@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Mapsui.Geometries;
+using Mapsui.GeometryLayer;
 using Mapsui.Layers;
 using Mapsui.Logging;
-using Mapsui.Providers;
+using Mapsui.Rendering.Skia.Extensions;
 using Mapsui.Rendering.Skia.SkiaStyles;
 using Mapsui.Rendering.Skia.SkiaWidgets;
 using Mapsui.Styles;
 using Mapsui.UI;
 using Mapsui.Widgets;
-using Mapsui.Widgets.Button;
+using Mapsui.Widgets.ButtonWidget;
 using Mapsui.Widgets.ScaleBar;
 using Mapsui.Widgets.Zoom;
 using SkiaSharp;
@@ -23,8 +24,8 @@ namespace Mapsui.Rendering.Skia
         private const int TilesToKeepMultiplier = 3;
         private const int MinimumTilesToKeep = 32;
         private readonly SymbolCache _symbolCache = new SymbolCache();
-        private readonly IDictionary<object, BitmapInfo> _tileCache =
-            new Dictionary<object, BitmapInfo>(new IdentityComparer<object>());
+        private readonly IDictionary<object, BitmapInfo?> _tileCache =
+            new Dictionary<object, BitmapInfo?>(new IdentityComparer<object>());
         private long _currentIteration;
 
         public ISymbolCache SymbolCache => _symbolCache;
@@ -50,7 +51,7 @@ namespace Mapsui.Rendering.Skia
         }
 
         public void Render(object target, IReadOnlyViewport viewport, IEnumerable<ILayer> layers,
-            IEnumerable<IWidget> widgets, Color background = null)
+            IEnumerable<IWidget> widgets, Color? background = null)
         {
             var attributions = layers.Where(l => l.Enabled).Select(l => l.Attribution).Where(w => w != null).ToList();
 
@@ -60,41 +61,39 @@ namespace Mapsui.Rendering.Skia
         }
 
         private void RenderTypeSave(SKCanvas canvas, IReadOnlyViewport viewport, IEnumerable<ILayer> layers,
-            IEnumerable<IWidget> widgets, Color background = null)
+            IEnumerable<IWidget> widgets, Color? background = null)
         {
             if (!viewport.HasSize) return;
 
-            if (background != null) canvas.Clear(background.ToSkia(1));
+            if (background is not null) canvas.Clear(background.ToSkia());
             Render(canvas, viewport, layers);
             Render(canvas, viewport, widgets, 1);
         }
 
-        public MemoryStream RenderToBitmapStream(IReadOnlyViewport viewport, IEnumerable<ILayer> layers, Color background = null, float pixelDensity = 1)
+        public MemoryStream? RenderToBitmapStream(IReadOnlyViewport? viewport, IEnumerable<ILayer> layers, Color? background = null, float pixelDensity = 1)
         {
+            if (viewport == null)
+                return null;
+
             try
             {
                 var width = (int)viewport.Width;
                 var height = (int)viewport.Height;
-                var imageInfo = new SKImageInfo((int)Math.Round(width * pixelDensity), (int)Math.Round(height * pixelDensity), 
+
+                var imageInfo = new SKImageInfo((int)Math.Round(width * pixelDensity), (int)Math.Round(height * pixelDensity),
                     SKImageInfo.PlatformColorType, SKAlphaType.Unpremul);
 
-                using (var surface = SKSurface.Create(imageInfo))
-                {
-                    if (surface == null) return null;
-                    // Not sure if this is needed here:
-                    if (background != null) surface.Canvas.Clear(background.ToSkia(1));
-                    surface.Canvas.Scale(pixelDensity, pixelDensity);
-                    Render(surface.Canvas, viewport, layers);
-                    using (var image = surface.Snapshot())
-                    {
-                        using (var data = image.Encode())
-                        {
-                            var memoryStream = new MemoryStream();
-                            data.SaveTo(memoryStream);
-                            return memoryStream;
-                        }
-                    }
-                }
+                using var surface = SKSurface.Create(imageInfo);
+                if (surface == null) return null;
+                // Not sure if this is needed here:
+                if (background is not null) surface.Canvas.Clear(background.ToSkia());
+                surface.Canvas.Scale(pixelDensity, pixelDensity);
+                Render(surface.Canvas, viewport, layers);
+                using var image = surface.Snapshot();
+                using var data = image.Encode();
+                var memoryStream = new MemoryStream();
+                data.SaveTo(memoryStream);
+                return memoryStream;
             }
             catch (Exception ex)
             {
@@ -124,7 +123,7 @@ namespace Mapsui.Rendering.Skia
         private void RemovedUnusedBitmapsFromCache()
         {
             var tilesUsedInCurrentIteration =
-                _tileCache.Values.Count(i => i.IterationUsed == _currentIteration);
+                _tileCache.Values.Count(i => i?.IterationUsed == _currentIteration);
             var tilesToKeep = tilesUsedInCurrentIteration * TilesToKeepMultiplier;
             tilesToKeep = Math.Max(tilesToKeep, MinimumTilesToKeep);
             var tilesToRemove = _tileCache.Keys.Count - tilesToKeep;
@@ -132,16 +131,16 @@ namespace Mapsui.Rendering.Skia
             if (tilesToRemove > 0) RemoveOldBitmaps(_tileCache, tilesToRemove);
         }
 
-        private static void RemoveOldBitmaps(IDictionary<object, BitmapInfo> tileCache, int numberToRemove)
+        private static void RemoveOldBitmaps(IDictionary<object, BitmapInfo?> tileCache, int numberToRemove)
         {
             var counter = 0;
-            var orderedKeys = tileCache.OrderBy(kvp => kvp.Value.IterationUsed).Select(kvp => kvp.Key).ToList();
+            var orderedKeys = tileCache.OrderBy(kvp => kvp.Value?.IterationUsed).Select(kvp => kvp.Key).ToList();
             foreach (var key in orderedKeys)
             {
                 if (counter >= numberToRemove) break;
                 var textureInfo = tileCache[key];
                 tileCache.Remove(key);
-                textureInfo.Bitmap.Dispose();
+                textureInfo?.Bitmap?.Dispose();
                 counter++;
             }
         }
@@ -154,7 +153,8 @@ namespace Mapsui.Rendering.Skia
                 // Save canvas
                 canvas.Save();
                 // We have a special renderer, so try, if it could draw this
-                var result = ((ISkiaStyleRenderer)StyleRenderers[style.GetType()]).Draw(canvas, viewport, layer, feature, style, _symbolCache);
+                var styleRenderer = (ISkiaStyleRenderer)StyleRenderers[style.GetType()];
+                var result = styleRenderer.Draw(canvas, viewport, layer, feature, style, _symbolCache);
                 // Restore old canvas
                 canvas.Restore();
                 // Was it drawn?
@@ -164,42 +164,15 @@ namespace Mapsui.Rendering.Skia
             }
 
             // No special style renderer handled this up to now, than try standard renderers
-            RenderGeometry(canvas, viewport, style, layerOpacity, feature, feature.Geometry);
-        }
 
-        private void RenderGeometry(SKCanvas canvas, IReadOnlyViewport viewport, IStyle style, float layerOpacity, IFeature geometryFeature, IGeometry geometry)
-        {
-            if (geometry is Point)
-                PointRenderer.Draw(canvas, viewport, style, geometryFeature, geometry, _symbolCache,
-                    layerOpacity * style.Opacity);
-            else if (geometry is MultiPoint)
-                MultiPointRenderer.Draw(canvas, viewport, style, geometryFeature, geometry,
-                    _symbolCache, layerOpacity * style.Opacity);
-            else if (geometry is LineString)
-                LineStringRenderer.Draw(canvas, viewport, style, geometryFeature, geometry,
-                    layerOpacity * style.Opacity);
-            else if (geometry is MultiLineString)
-                MultiLineStringRenderer.Draw(canvas, viewport, style, geometryFeature, geometry,
-                    layerOpacity * style.Opacity);
-            else if (geometry is Polygon)
-                PolygonRenderer.Draw(canvas, viewport, style, geometryFeature, geometry,
-                    layerOpacity * style.Opacity, _symbolCache);
-            else if (geometry is MultiPolygon)
-                MultiPolygonRenderer.Draw(canvas, viewport, style, geometryFeature, geometry,
-                    layerOpacity * style.Opacity, _symbolCache);
-            else if (geometry is IRaster)
-                RasterRenderer.Draw(canvas, viewport, style, geometryFeature, layerOpacity * style.Opacity,
-                    _tileCache, _currentIteration);
-            else if (geometry is IGeometryCollection collection)
-            {
-                for (int i = 0; i < collection.NumGeometries; i++)
-                {
-                    RenderGeometry(canvas, viewport, style, layerOpacity, geometryFeature, collection.Geometry(i));
-                }
-            }
-            else
-                Logger.Log(LogLevel.Warning,
-                    $"Failed to find renderer for geometry feature of type {geometry.GetType()}");
+            if (feature is GeometryFeature geometryFeature)
+                GeometryRenderer.Draw(canvas, viewport, style, layerOpacity, geometryFeature, _symbolCache);
+            else if (feature is PointFeature pointFeature)
+                PointRenderer.Draw(canvas, viewport, style, pointFeature, pointFeature.Point.X, pointFeature.Point.Y, _symbolCache, layerOpacity * style.Opacity);
+            else if (feature is RectFeature rectFeature)
+                RectRenderer.Draw(canvas, viewport, style, rectFeature, layerOpacity * style.Opacity);
+            else if (feature is RasterFeature rasterFeature)
+                RasterRenderer.Draw(canvas, viewport, style, rasterFeature, rasterFeature.Raster, layerOpacity * style.Opacity, _tileCache, _currentIteration);
         }
 
         private void Render(object canvas, IReadOnlyViewport viewport, IEnumerable<IWidget> widgets, float layerOpacity)
@@ -207,26 +180,24 @@ namespace Mapsui.Rendering.Skia
             WidgetRenderer.Render(canvas, viewport, widgets, WidgetRenders, layerOpacity);
         }
 
-        public MapInfo GetMapInfo(double x, double y, IReadOnlyViewport viewport, IEnumerable<ILayer> layers, int margin = 0)
+        public MapInfo? GetMapInfo(double x, double y, IReadOnlyViewport viewport, IEnumerable<ILayer> layers, int margin = 0)
         {
             // todo: use margin to increase the pixel area
             // todo: We will need to select on style instead of layer
-            
-
 
             layers = layers
                 .Select(l => (l is RasterizingLayer rl) ? rl.ChildLayer : l)
                 .Where(l => l.IsMapInfoLayer);
 
             var list = new List<MapInfoRecord>();
-            var result = new MapInfo()
+            var result = new MapInfo
             {
-                ScreenPosition = new Point(x, y),
+                ScreenPosition = new MPoint(x, y),
                 WorldPosition = viewport.ScreenToWorld(x, y),
                 Resolution = viewport.Resolution
             };
 
-            if (!viewport.Extent.Contains(viewport.ScreenToWorld(result.ScreenPosition))) return result;
+            if (!viewport.Extent?.Contains(viewport.ScreenToWorld(result.ScreenPosition)) ?? false) return result;
 
             try
             {
@@ -251,7 +222,9 @@ namespace Mapsui.Rendering.Skia
                     var pixmap = surface.PeekPixels();
                     var color = pixmap.GetPixelColor(intX, intY);
 
+
                     VisibleFeatureIterator.IterateLayers(viewport, layers, (v, layer, style, feature, opacity) => {
+                        // ReSharper disable AccessToDisposedClosure // There is no delayed fetch. After IterateLayers returns all is done. I do not see a problem.
                         surface.Canvas.Save();
                         // 1) Clear the entire bitmap
                         surface.Canvas.Clear(SKColors.Transparent);
@@ -262,6 +235,7 @@ namespace Mapsui.Rendering.Skia
                             // 4) Add feature and style to result
                             list.Add(new MapInfoRecord(feature, style, layer));
                         surface.Canvas.Restore();
+                        // ReSharper restore AccessToDisposedClosure
                     });
                 }
 
@@ -285,7 +259,7 @@ namespace Mapsui.Rendering.Skia
             return result;
         }
 
-        public MapInfo GetMapInfo(Point screenPosition, IReadOnlyViewport viewport, IEnumerable<ILayer> layers, int margin = 0)
+        public MapInfo? GetMapInfo(MPoint screenPosition, IReadOnlyViewport viewport, IEnumerable<ILayer> layers, int margin = 0)
         {
             return GetMapInfo(screenPosition.X, screenPosition.Y, viewport, layers, margin);
         }

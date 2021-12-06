@@ -4,12 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Mapsui.Logging;
 
 namespace Mapsui.Samples.Common
 {
     public static class AllSamples
     {
-        public static IEnumerable<ISample> GetSamples()
+        public static IEnumerable<ISample>? GetSamples()
         {
             var type = typeof(ISample);
             var assemblies = AppDomain.CurrentDomain.GetAssemblies()
@@ -17,22 +18,21 @@ namespace Mapsui.Samples.Common
 
             try
             {
-            return assemblies
-                .SelectMany(s => s.GetTypes())
-                .Where(p => type.IsAssignableFrom(p) && !p.IsInterface)
-                .Select(Activator.CreateInstance).Select(t => t as ISample)
-                .OrderBy(s => s?.Name)
-                .ThenBy(s => s?.Category)
-                .ToList();
+                return (assemblies?
+                        .SelectMany(s => s.GetTypes())
+                        .Where(p => type.IsAssignableFrom(p) && !p.IsInterface)
+                        .Select(Activator.CreateInstance)).Where(f => f is not null).OfType<ISample>()
+                        .OrderBy(s => s?.Name)
+                        .ThenBy(s => s?.Category)
+                        .ToList();
             }
             catch (ReflectionTypeLoadException ex)
             {
-                StringBuilder sb = new StringBuilder();
-                foreach (Exception exSub in ex.LoaderExceptions)
+                var sb = new StringBuilder();
+                foreach (var exSub in ex.LoaderExceptions)
                 {
                     sb.AppendLine(exSub.Message);
-                    FileNotFoundException exFileNotFound = exSub as FileNotFoundException;
-                    if (exFileNotFound != null)
+                    if (exSub is FileNotFoundException exFileNotFound)
                     {
                         if (!string.IsNullOrEmpty(exFileNotFound.FusionLog))
                         {
@@ -42,8 +42,7 @@ namespace Mapsui.Samples.Common
                     }
                     sb.AppendLine();
                 }
-                string errorMessage = sb.ToString();
-                //Display or log the error based on your application.
+                Logger.Log(LogLevel.Error, sb.ToString(), ex);
             }
 
             return null;

@@ -1,11 +1,12 @@
-﻿using Mapsui.Layers;
+﻿using Mapsui.Extensions;
+using Mapsui.Layers;
 using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.Utilities;
 
 namespace Mapsui.Samples.Common.Maps
 {
-    public class GeodanOfficesSample 
+    public class GeodanOfficesSample
     {
         public static MemoryLayer CreateLayer()
         {
@@ -15,14 +16,13 @@ namespace Mapsui.Samples.Common.Maps
 
             var layer = new MemoryLayer
             {
-                DataSource = new MemoryProvider(new[] {geodanAmsterdam, geodanDenBosch}),
+                DataSource = new MemoryProvider<IFeature>(new[] { geodanAmsterdam, geodanDenBosch }.ToFeatures()),
                 Style = new SymbolStyle
                 {
                     BitmapId = BitmapRegistry.Instance.Register(imageStream),
-                    SymbolOffset = new Offset {Y = 64},
+                    SymbolOffset = new Offset { Y = 64 },
                     SymbolScale = 0.25
                 },
-                CRS = "EPSG:28992",
                 Name = "Geodan Offices"
             };
             return layer;

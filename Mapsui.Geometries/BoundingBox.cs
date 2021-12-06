@@ -31,13 +31,12 @@ namespace Mapsui.Geometries
     /// </remarks>
     public class BoundingBox : IEquatable<BoundingBox>
     {
-        public BoundingBox() {}
-
         public BoundingBox(BoundingBox boundingBox) : this(
             boundingBox.Min.X,
             boundingBox.Min.Y,
             boundingBox.Max.X,
-            boundingBox.Max.Y) {}
+            boundingBox.Max.Y)
+        { }
 
         /// <summary>
         ///     Initializes a bounding box
@@ -62,34 +61,40 @@ namespace Mapsui.Geometries
         /// <param name="minPoint">Lower left corner</param>
         /// <param name="maxPoint">Upper right corner</param>
         public BoundingBox(Point minPoint, Point maxPoint)
-            : this(minPoint.X, minPoint.Y, maxPoint.X, maxPoint.Y) {}
+            : this(minPoint.X, minPoint.Y, maxPoint.X, maxPoint.Y) { }
 
         /// <summary>
         ///     Initializes a new Bounding Box based on the bounds from a set of geometries
         /// </summary>
         /// <param name="objects">list of objects</param>
-        public BoundingBox(IEnumerable<Geometry> objects) : this(objects.Select(o => o.BoundingBox)) {}
+        public BoundingBox(IEnumerable<Geometry> objects) : this(objects.Select(o => o.BoundingBox)) { }
 
         /// <summary>
         ///     Initializes a new Bounding Box based on the bounds from a set of bounding boxes
         /// </summary>
-        public BoundingBox(IEnumerable<BoundingBox> boundingBoxes)
+        public BoundingBox(IEnumerable<BoundingBox?> boundingBoxes)
         {
-            Max = null;
-            Min = null;
+            Point? min = null;
+            Point? max = null;
 
             foreach (var boundingBox in boundingBoxes)
             {
-                if (Min == null)
-                    Min = boundingBox.Min.Clone();
-                if (Max == null)
-                    Max = boundingBox.Max.Clone();
+                if (boundingBox == null)
+                {
+                    continue;
+                }
 
-                Min.X = Math.Min(boundingBox.Min.X, Min.X);
-                Min.Y = Math.Min(boundingBox.Min.Y, Min.Y);
-                Max.X = Math.Max(boundingBox.Max.X, Max.X);
-                Max.Y = Math.Max(boundingBox.Max.Y, Max.Y);
+                min ??= boundingBox.Min.Clone();
+                max ??= boundingBox.Max.Clone();
+
+                min.X = Math.Min(boundingBox.Min.X, min.X);
+                min.Y = Math.Min(boundingBox.Min.Y, min.Y);
+                max.X = Math.Max(boundingBox.Max.X, max.X);
+                max.Y = Math.Max(boundingBox.Max.Y, max.Y);
             }
+
+            Min = min ?? throw new NullReferenceException(nameof(boundingBoxes));
+            Max = max ?? throw new NullReferenceException(nameof(boundingBoxes));
         }
 
         public double MinX => Min.X;
@@ -180,7 +185,7 @@ namespace Mapsui.Geometries
         /// </summary>
         /// <param name="other"><see cref="BoundingBox" /> to compare to.</param>
         /// <returns>True if equal</returns>
-        public bool Equals(BoundingBox other)
+        public bool Equals(BoundingBox? other)
         {
             if (other == null) return false;
 
@@ -236,7 +241,7 @@ namespace Mapsui.Geometries
         /// </summary>
         /// <param name="box"></param>
         /// <returns></returns>
-        public bool Intersects(BoundingBox box)
+        public bool Intersects(BoundingBox? box)
         {
             if (box == null) return false;
             return !((box.Min.X > Max.X) ||
@@ -302,7 +307,7 @@ namespace Mapsui.Geometries
         /// <returns>Area of box</returns>
         public double GetArea()
         {
-            return Width*Height;
+            return Width * Height;
         }
 
         /// <summary>
@@ -334,7 +339,7 @@ namespace Mapsui.Geometries
         /// </summary>
         /// <param name="box">Boundingbox to join with</param>
         /// <returns>Boundingbox containing both boundingboxes</returns>
-        public BoundingBox Join(BoundingBox box)
+        public BoundingBox Join(BoundingBox? box)
         {
             if (box == null)
                 return Clone();
@@ -348,12 +353,12 @@ namespace Mapsui.Geometries
         /// <param name="box1"></param>
         /// <param name="box2"></param>
         /// <returns></returns>
-        public static BoundingBox Join(BoundingBox box1, BoundingBox box2)
+        public static BoundingBox? Join(BoundingBox? box1, BoundingBox? box2)
         {
             if ((box1 == null) && (box2 == null))
                 return null;
             if (box1 == null)
-                return box2.Clone();
+                return box2!.Clone();
             return box1.Join(box2);
         }
 
@@ -362,7 +367,7 @@ namespace Mapsui.Geometries
         /// </summary>
         /// <param name="boxes">Boxes to join</param>
         /// <returns>Combined BoundingBox</returns>
-        public static BoundingBox Join(BoundingBox[] boxes)
+        public static BoundingBox? Join(BoundingBox[]? boxes)
         {
             if (boxes == null) return null;
             if (boxes.Length == 1) return boxes[0];
@@ -375,10 +380,10 @@ namespace Mapsui.Geometries
         }
 
         /// <summary>
-        ///     Increases the size of the boundingbox by the givent amount in all directions
+        ///     Increases the size of the boundingbox by the given amount in all directions
         /// </summary>
         /// <param name="amount">Amount to grow in all directions</param>
-        public BoundingBox Grow(double amount)
+        public BoundingBox? Grow(double amount)
         {
             var box = Clone();
             box.Min.X -= amount;
@@ -390,11 +395,11 @@ namespace Mapsui.Geometries
         }
 
         /// <summary>
-        ///     Increases the size of the boundingbox by the givent amount in horizontal and vertical directions
+        ///     Increases the size of the boundingbox by the given amount in horizontal and vertical directions
         /// </summary>
         /// <param name="amountInX">Amount to grow in horizontal direction</param>
         /// <param name="amountInY">Amount to grow in vertical direction</param>
-        public BoundingBox Grow(double amountInX, double amountInY)
+        public BoundingBox? Grow(double amountInX, double amountInY)
         {
             var box = Clone();
             box.Min.X -= amountInX;
@@ -457,7 +462,7 @@ namespace Mapsui.Geometries
 
                 if (box.Max[cIndex] < Min[cIndex]) x = Math.Abs(box.Max[cIndex] - Min[cIndex]);
                 else if (Max[cIndex] < box.Min[cIndex]) x = Math.Abs(box.Min[cIndex] - Max[cIndex]);
-                ret += x*x;
+                ret += x * x;
             }
             return Math.Sqrt(ret);
         }

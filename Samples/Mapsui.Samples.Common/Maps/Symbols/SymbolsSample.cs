@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Mapsui.Geometries;
 using Mapsui.Layers;
+using Mapsui.Layers.Tiling;
 using Mapsui.Providers;
 using Mapsui.Samples.Common.Helpers;
 using Mapsui.Styles;
 using Mapsui.UI;
-using Mapsui.Utilities;
 
 namespace Mapsui.Samples.Common.Maps
 {
@@ -26,12 +25,12 @@ namespace Mapsui.Samples.Common.Maps
             var map = new Map();
 
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
-            map.Layers.Add(CreateStylesLayer(map.Envelope));
-            
+            map.Layers.Add(CreateStylesLayer(map.Extent));
+
             return map;
         }
 
-        private static ILayer CreateStylesLayer(BoundingBox envelope)
+        private static ILayer CreateStylesLayer(MRect? envelope)
         {
             return new MemoryLayer
             {
@@ -42,20 +41,23 @@ namespace Mapsui.Samples.Common.Maps
             };
         }
 
-        public static MemoryProvider CreateMemoryProviderWithDiverseSymbols(BoundingBox envelope, int count = 100)
+        public static MemoryProvider<IFeature> CreateMemoryProviderWithDiverseSymbols(MRect? envelope, int count = 100)
         {
-            
-            return new MemoryProvider(CreateDiverseFeatures(RandomPointHelper.GenerateRandomPoints(envelope, count)));
+
+            return new MemoryProvider<IFeature>(CreateDiverseFeatures(RandomPointGenerator.GenerateRandomPoints(envelope, count)));
         }
 
-        private static Features CreateDiverseFeatures(IEnumerable<IGeometry> randomPoints)
+        private static IEnumerable<IFeature> CreateDiverseFeatures(IEnumerable<MPoint> randomPoints)
         {
-            var features = new Features();
+            var features = new List<IFeature>();
             var counter = 0;
             var styles = CreateDiverseStyles().ToList();
             foreach (var point in randomPoints)
             {
-                var feature = new Feature { Geometry = point, ["Label"] = counter.ToString() };
+                var feature = new PointFeature(point)
+                {
+                    ["Label"] = counter.ToString()
+                };
 
                 feature.Styles.Add(styles[counter]);
                 feature.Styles.Add(SmalleDot());
@@ -119,7 +121,7 @@ namespace Mapsui.Samples.Common.Maps
 
         private static IFeature CreatePointWithStackedStyles()
         {
-            var feature = new Feature { Geometry = new Point(5000000, -5000000) };
+            var feature = new PointFeature(new MPoint(5000000, -5000000));
 
             feature.Styles.Add(new SymbolStyle
             {

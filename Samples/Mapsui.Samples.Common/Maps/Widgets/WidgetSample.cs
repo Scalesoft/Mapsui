@@ -1,4 +1,5 @@
-﻿using Mapsui.Styles;
+﻿using Mapsui.Extensions;
+using Mapsui.Styles;
 using Mapsui.UI;
 using Mapsui.Widgets;
 using Mapsui.Widgets.Zoom;
@@ -35,7 +36,7 @@ namespace Mapsui.Samples.Common.Maps
             return map;
         }
 
-        private static IWidget CreateHyperlink(string text, VerticalAlignment verticalAlignment, 
+        private static IWidget CreateHyperlink(string text, VerticalAlignment verticalAlignment,
             HorizontalAlignment horizontalAlignment)
         {
             return new Hyperlink()

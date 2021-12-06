@@ -1,11 +1,11 @@
-﻿using System.Reflection;
-using Mapsui.Geometries;
+﻿using System.Collections.Generic;
+using System.Reflection;
 using Mapsui.Layers;
 using Mapsui.Providers;
 using Mapsui.Samples.Common;
 using Mapsui.Styles;
 using Mapsui.UI;
-using Svg.Skia;
+
 
 namespace Mapsui.Tests.Common.Maps
 {
@@ -21,53 +21,49 @@ namespace Mapsui.Tests.Common.Maps
 
         public static Map CreateMap()
         {
-            var map = new Map
-            {
-                BackColor = Color.Transparent,
-                Home = n => n.NavigateTo(new Point(100, 100), 1)
-            };
-            map.Layers.Add(new MemoryLayer
+            var layer = new MemoryLayer
             {
                 Style = null,
-                DataSource = new MemoryProvider(CreateFeatures()),
+                DataSource = new MemoryProvider<IFeature>(CreateFeatures()),
                 Name = "Points with Svg"
-            });
+            };
+
+            var map = new Map
+            {
+                BackColor = Color.FromString("WhiteSmoke"),
+                Home = n => n.NavigateTo(layer.Extent?.Grow(layer.Extent.Width * 2))
+            };
+
+            map.Layers.Add(layer);
+
             return map;
         }
 
-        public static Features CreateFeatures()
+        public static IEnumerable<IFeature> CreateFeatures()
         {
-            var pinId = LoadSvg("Mapsui.Tests.Common.Resources.Images.Pin.svg");            
+            var pinId = LoadSvg("Mapsui.Tests.Common.Resources.Images.Pin.svg");
 
-            return new Features
+            return new List<IFeature>
             {
-                new Feature
-                {
-                    Geometry = new Point(50, 50),
+                new PointFeature(new MPoint(50, 50)) {
                     Styles = new[] {new SymbolStyle {BitmapId = pinId}}
                 },
-                new Feature
-                {
-                    Geometry = new Point(50, 100),
+                new PointFeature(new MPoint(50, 100)) {
                     Styles = new[] {new SymbolStyle {BitmapId = pinId}}
                 },
-                new Feature
-                {
-                    Geometry = new Point(100, 50),
+                new PointFeature(new MPoint(100, 50)) {
                     Styles = new[] {new SymbolStyle {BitmapId = pinId}}
                 },
-                new Feature
-                {
-                    Geometry = new Point(100, 100),
+                new PointFeature(new MPoint(100, 100)) {
                     Styles = new[] {new SymbolStyle {BitmapId = pinId}}
                 }
             };
         }
 
-        private static int LoadSvg(string bitmapPath, bool registerImage = false)
+        private static int LoadSvg(string bitmapPath)
         {
-            var bitmapStream = typeof(Utilities).GetTypeInfo().Assembly.GetManifestResourceStream(bitmapPath);        
-            return BitmapRegistry.Instance.Register(bitmapStream);                
+            var bitmapStream = typeof(Utilities).GetTypeInfo().Assembly.GetManifestResourceStream(bitmapPath);
+            return BitmapRegistry.Instance.Register(bitmapStream);
         }
     }
 }

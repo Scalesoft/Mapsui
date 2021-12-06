@@ -19,11 +19,11 @@ namespace Mapsui.Providers.Wfs.Utilities
         MultiPolygonPropertyType,
         MultiSurfacePropertyType,
         Unknown
-    } ;
+    };
 
     public class WfsFeatureTypeInfo
     {
-        
+
         private BoundingBox _boundingBox = new BoundingBox();
         private string _cs = ",";
         private string _decimalDel = ".";
@@ -31,8 +31,8 @@ namespace Mapsui.Providers.Wfs.Utilities
         private GeometryInfo _geometry = new GeometryInfo();
         private string _name = string.Empty;
 
-        private string _prefix = string.Empty;
-        private string _serviceUri = string.Empty;
+        private string? _prefix = string.Empty;
+        private string? _serviceUri = string.Empty;
         private string _srid = "4326";
         private string _ts = " ";
         private readonly List<ElementInfo> _elements = new List<ElementInfo>();
@@ -40,10 +40,7 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// <summary>
         /// Gets the elements associated to the feature.
         /// </summary>
-        public List<ElementInfo> Elements
-        {
-            get { return _elements; }
-        }
+        public List<ElementInfo> Elements => _elements;
 
         /// <summary>
         /// Gets or sets the name of the featuretype.
@@ -52,8 +49,8 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// <value>The name.</value>
         public string Name
         {
-            get { return _name; }
-            set { _name = value; }
+            get => _name;
+            set => _name = value;
         }
 
         /// <summary>
@@ -62,10 +59,10 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// prefix in 'GetCapabilities'.
         /// </summary>
         /// <value>The prefix.</value>
-        public string Prefix
+        public string? Prefix
         {
-            get { return _prefix; }
-            set { _prefix = value; }
+            get => _prefix;
+            set => _prefix = value;
         }
 
         /// <summary>
@@ -74,26 +71,23 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public string FeatureTypeNamespace
         {
-            get { return _featureTypeNamespace; }
-            set { _featureTypeNamespace = value; }
+            get => _featureTypeNamespace;
+            set => _featureTypeNamespace = value;
         }
 
         /// <summary>
         /// Gets the qualified name of the featuretype (with namespace URI).
         /// </summary>
-        internal string QualifiedName
-        {
-            get { return _featureTypeNamespace + _name; }
-        }
+        internal string QualifiedName => _featureTypeNamespace + _name;
 
         /// <summary>
         /// Gets or sets the service URI for WFS 'GetFeature' request.
         /// This argument is obligatory for data retrieving.
         /// </summary>
-        public string ServiceUri
+        public string? ServiceUri
         {
-            get { return _serviceUri; }
-            set { _serviceUri = value; }
+            get => _serviceUri;
+            set => _serviceUri = value;
         }
 
         /// <summary>
@@ -102,8 +96,8 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public GeometryInfo Geometry
         {
-            get { return _geometry; }
-            set { _geometry = value; }
+            get => _geometry;
+            set => _geometry = value;
         }
 
         /// <summary>
@@ -111,8 +105,8 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public BoundingBox BBox
         {
-            get { return _boundingBox; }
-            set { _boundingBox = value; }
+            get => _boundingBox;
+            set => _boundingBox = value;
         }
 
         /// <summary>
@@ -120,8 +114,8 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public string SRID
         {
-            get { return _srid; }
-            set { _srid = value; }
+            get => _srid;
+            set => _srid = value;
         }
 
         //Coordinates can be included in a single string, but there is no 
@@ -135,8 +129,8 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public string DecimalDel
         {
-            get { return _decimalDel; }
-            set { _decimalDel = value; }
+            get => _decimalDel;
+            set => _decimalDel = value;
         }
 
         /// <summary>
@@ -144,8 +138,8 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public string Cs
         {
-            get { return _cs; }
-            set { _cs = value; }
+            get => _cs;
+            set => _cs = value;
         }
 
         /// <summary>
@@ -153,15 +147,15 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public string Ts
         {
-            get { return _ts; }
-            set { _ts = value; }
+            get => _ts;
+            set => _ts = value;
         }
 
 
-        public List<string> LabelFields { get; set; } // temp solution 
+        public List<string>? LabelFields { get; set; } // temp solution 
 
-        
-        
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="WfsFeatureTypeInfo"/> class.
         /// </summary>
@@ -221,9 +215,9 @@ namespace Mapsui.Providers.Wfs.Utilities
         {
         }
 
-        
-        
-        
+
+
+
         /// <summary>
         /// The bounding box defines the spatial extent of a featuretype.
         /// </summary>
@@ -235,8 +229,8 @@ namespace Mapsui.Providers.Wfs.Utilities
             public double MinLong;
         }
 
-        
-        
+
+
         /// <summary>
         /// The geometry info comprises the name of the geometry attribute (e.g. 'Shape" or 'geom')
         /// and the type of the featuretype's geometry.
@@ -255,14 +249,8 @@ namespace Mapsui.Providers.Wfs.Utilities
         {
             public ElementInfo(string name, string dataType)
             {
-                if (name == null)
-                    throw new ArgumentNullException("name");
-
-                if (dataType == null)
-                    throw new ArgumentNullException("dataType");
-
-                Name = name;
-                DataType = dataType;
+                Name = name ?? throw new ArgumentNullException("name");
+                DataType = dataType ?? throw new ArgumentNullException("dataType");
             }
 
             /// <summary>

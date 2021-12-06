@@ -6,7 +6,7 @@ skip_commits:
     - docfx/**/*
     - logo/**/*
     - '**/*.md'
-image: Visual Studio 2019
+image: Visual Studio 2022
 assembly_info:
   patch: true
   file: '**\AssemblyInfo.*'
@@ -14,9 +14,12 @@ assembly_info:
   assembly_file_version: '{version}'
   assembly_informational_version: '{version}'
 environment:
-  version-short: 3.0.0
+  version-short: 3.0.0  
 nuget:
   disable_publish_on_pr: true
+install:
+- cmd: dotnet workload install maui
+- cmd: '"C:/Program Files (x86)/Android/android-sdk/tools/bin/sdkmanager.bat" "platforms;android-30"'
 before_build:
 - cmd: nuget restore mapsui.sln
 build:

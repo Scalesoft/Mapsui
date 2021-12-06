@@ -47,18 +47,18 @@ namespace Mapsui.Geometries
         ///     Instatiates a polygon based on one extorier ring.
         /// </summary>
         /// <param name="exteriorRing">Exterior ring</param>
-        public Polygon(LinearRing exteriorRing) : this(exteriorRing, new Collection<LinearRing>()) {}
+        public Polygon(LinearRing exteriorRing) : this(exteriorRing, new Collection<LinearRing>()) { }
 
         /// <summary>
         ///     Instatiates a polygon
         /// </summary>
-        public Polygon() : this(new LinearRing(), new Collection<LinearRing>()) {}
+        public Polygon() : this(new LinearRing(), new Collection<LinearRing>()) { }
 
         /// <summary>
         ///     Gets or sets the exterior ring of this Polygon
         /// </summary>
         /// <remarks>This method is supplied as part of the OpenGIS Simple Features Specification</remarks>
-        public LinearRing ExteriorRing { get; set; }
+        public LinearRing? ExteriorRing { get; set; }
 
         /// <summary>
         ///     Gets or sets the interior rings of this Polygon
@@ -80,8 +80,8 @@ namespace Mapsui.Geometries
             get
             {
                 var area = 0.0;
-                area += ExteriorRing.Area;
-                var extIsClockwise = ExteriorRing.IsCCW();
+                area += ExteriorRing?.Area ?? 0;
+                var extIsClockwise = ExteriorRing?.IsCCW() ?? false;
                 foreach (var linearRing in InteriorRings)
                 {
                     if (linearRing.IsCCW() != extIsClockwise)
@@ -92,7 +92,7 @@ namespace Mapsui.Geometries
                 return area;
             }
         }
-        
+
         /// <summary>
         ///     Returns the Nth interior ring for this Polygon as a LineString
         /// </summary>
@@ -108,7 +108,7 @@ namespace Mapsui.Geometries
         ///     Returns the bounding box of the object
         /// </summary>
         /// <returns>bounding box</returns>
-        public override BoundingBox BoundingBox
+        public override BoundingBox? BoundingBox
         {
             get
             {
@@ -133,7 +133,7 @@ namespace Mapsui.Geometries
         /// <returns>Copy of Geometry</returns>
         public new Polygon Clone()
         {
-            var polygon = new Polygon {ExteriorRing = ExteriorRing.Clone()};
+            var polygon = new Polygon { ExteriorRing = ExteriorRing?.Clone() };
             foreach (var interiorRing in InteriorRings)
             {
                 polygon.InteriorRings.Add(interiorRing.Clone());
@@ -146,11 +146,11 @@ namespace Mapsui.Geometries
         /// </summary>
         /// <param name="p">Polygon to compare with</param>
         /// <returns></returns>
-        public bool Equals(Polygon p)
+        public bool Equals(Polygon? p)
         {
             if (p == null)
                 return false;
-            if (!p.ExteriorRing.Equals(ExteriorRing))
+            if (!p.ExteriorRing?.Equals(ExteriorRing) ?? false)
                 return false;
             if (p.InteriorRings.Count != InteriorRings.Count)
                 return false;
@@ -169,7 +169,7 @@ namespace Mapsui.Geometries
         /// <returns>A hash code for the current <see cref="GetHashCode" />.</returns>
         public override int GetHashCode()
         {
-            var hash = ExteriorRing.GetHashCode();
+            var hash = ExteriorRing?.GetHashCode() ?? 0;
 
             foreach (var ring in InteriorRings)
             {
@@ -195,15 +195,15 @@ namespace Mapsui.Geometries
         {
             if (Contains(point)) return 0;
 
-            return Algorithms.DistanceToLine(point, ExteriorRing.Vertices);
+            return Algorithms.DistanceToLine(point, ExteriorRing?.Vertices);
         }
 
         public override bool Contains(Point point)
         {
-            return BoundingBox.Contains(point) && // First check bounds for performance
-                Algorithms.PointInPolygon(ExteriorRing.Vertices, point);
+            return (BoundingBox != null) && BoundingBox.Contains(point) && // First check bounds for performance
+                   (ExteriorRing != null) && Algorithms.PointInPolygon(ExteriorRing.Vertices, point);
         }
-        
+
         public override bool Equals(Geometry geom)
         {
             var polygon = geom as Polygon;
@@ -214,7 +214,7 @@ namespace Mapsui.Geometries
         public Polygon Rotate(double degrees, Point center)
         {
             var rotatedPolygon = Clone();
-            rotatedPolygon.ExteriorRing = ExteriorRing.Rotate(degrees, center);
+            rotatedPolygon.ExteriorRing = ExteriorRing?.Rotate(degrees, center);
             for (var i = 0; i < InteriorRings.Count; i++)
             {
                 rotatedPolygon.InteriorRings[i] = InteriorRings[i].Rotate(degrees, center);

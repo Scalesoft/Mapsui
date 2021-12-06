@@ -4,9 +4,9 @@ using System.Threading;
 using BruTile;
 using BruTile.Cache;
 using BruTile.Predefined;
+using Mapsui.Extensions;
 using Mapsui.Fetcher;
-using Mapsui.Geometries;
-using Mapsui.Providers;
+using Mapsui.Layers;
 using Mapsui.Tests.Fetcher.Providers;
 using NUnit.Framework;
 
@@ -25,15 +25,17 @@ namespace Mapsui.Tests.Fetcher
             var tileProvider = new CountingTileProvider();
             var tileSchema = new GlobalSphericalMercator();
             var tileSource = new TileSource(tileProvider, tileSchema);
-            var cache = new MemoryCache<Feature>();
+            var cache = new MemoryCache<RasterFeature?>();
             var fetchDispatcher = new TileFetchDispatcher(cache, tileSource.Schema, tileInfo => TileToFeature(tileSource, tileInfo));
             var tileMachine = new FetchMachine(fetchDispatcher);
             var level = 3;
             var expectedTiles = 64;
 
+            var fetchInfo = new FetchInfo(tileSchema.Extent.ToMRect(), tileSchema.Resolutions[level].UnitsPerPixel);
+
             // Act
             // Get all tiles of level 3
-            fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[level].UnitsPerPixel);
+            fetchDispatcher.SetViewport(fetchInfo);
             tileMachine.Start();
             // Assert
             while (fetchDispatcher.Busy) { Thread.Sleep(1); }
@@ -50,19 +52,20 @@ namespace Mapsui.Tests.Fetcher
             var tileProvider = new CountingTileProvider();
             var tileSchema = new GlobalSphericalMercator();
             var tileSource = new TileSource(tileProvider, tileSchema);
-            var cache = new MemoryCache<Feature>();
+            var cache = new MemoryCache<RasterFeature?>();
             var fetchDispatcher = new TileFetchDispatcher(cache, tileSource.Schema, tileInfo => TileToFeature(tileSource, tileInfo));
             var tileMachine = new FetchMachine(fetchDispatcher);
             var level = 3;
             var expectedTiles = 64;
+            var fetchInfo = new FetchInfo(tileSchema.Extent.ToMRect(), tileSchema.Resolutions[level].UnitsPerPixel);
 
             // Act
-            fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[level].UnitsPerPixel);
+            fetchDispatcher.SetViewport(fetchInfo);
             tileMachine.Start();
             while (fetchDispatcher.Busy) { Thread.Sleep(1); }
             var countAfterFirstTry = tileProvider.CountByTile.Keys.Count;
             // do it again
-            fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[level].UnitsPerPixel);
+            fetchDispatcher.SetViewport(fetchInfo);
             tileMachine.Start();
             while (fetchDispatcher.Busy) { Thread.Sleep(1); }
 
@@ -81,21 +84,21 @@ namespace Mapsui.Tests.Fetcher
             var tileProvider = new NullTileProvider();
             var tileSchema = new GlobalSphericalMercator();
             var tileSource = new TileSource(tileProvider, tileSchema);
-            var cache = new MemoryCache<Feature>();
+            var cache = new MemoryCache<RasterFeature?>();
             var fetchDispatcher = new TileFetchDispatcher(cache, tileSource.Schema, tileInfo => TileToFeature(tileSource, tileInfo));
             var tileMachine = new FetchMachine(fetchDispatcher);
             var level = 3;
             var tilesInLevel = 64;
-
+            var fetchInfo = new FetchInfo(tileSchema.Extent.ToMRect(), tileSchema.Resolutions[level].UnitsPerPixel);
             // Act
-            fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[level].UnitsPerPixel);
+            fetchDispatcher.SetViewport(fetchInfo);
             tileMachine.Start();
             while (fetchDispatcher.Busy) { Thread.Sleep(1); }
             // do it again
-            fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[level].UnitsPerPixel);
+            fetchDispatcher.SetViewport(fetchInfo);
             tileMachine.Start();
             while (fetchDispatcher.Busy) { Thread.Sleep(1); }
-            
+
             // Assert
             Assert.AreEqual(tilesInLevel, tileProvider.TotalCount);
         }
@@ -107,19 +110,20 @@ namespace Mapsui.Tests.Fetcher
             var tileProvider = new FailingTileProvider();
             var tileSchema = new GlobalSphericalMercator();
             var tileSource = new TileSource(tileProvider, tileSchema);
-            var cache = new MemoryCache<Feature>();
+            var cache = new MemoryCache<RasterFeature?>();
             var fetchDispatcher = new TileFetchDispatcher(cache, tileSource.Schema, tileInfo => TileToFeature(tileSource, tileInfo));
             var tileMachine = new FetchMachine(fetchDispatcher);
             var level = 3;
             var tilesInLevel = 64;
+            var fetchInfo = new FetchInfo(tileSchema.Extent.ToMRect(), tileSchema.Resolutions[level].UnitsPerPixel);
 
             // Act
-            fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[level].UnitsPerPixel);
+            fetchDispatcher.SetViewport(fetchInfo);
             tileMachine.Start();
             while (fetchDispatcher.Busy) { Thread.Sleep(1); }
 
             // Act again
-            fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[level].UnitsPerPixel);
+            fetchDispatcher.SetViewport(fetchInfo);
             tileMachine.Start();
             while (fetchDispatcher.Busy) { Thread.Sleep(1); }
 
@@ -134,21 +138,22 @@ namespace Mapsui.Tests.Fetcher
             var tileProvider = new SometimesFailingTileProvider();
             var tileSchema = new GlobalSphericalMercator();
             var tileSource = new TileSource(tileProvider, tileSchema);
-            var cache = new MemoryCache<Feature>();
+            var cache = new MemoryCache<RasterFeature?>();
             var fetchDispatcher = new TileFetchDispatcher(cache, tileSource.Schema, tileInfo => TileToFeature(tileSource, tileInfo));
             var tileMachine = new FetchMachine(fetchDispatcher);
             var level = 3;
             var tilesInLevel = 64;
+            var fetchInfo = new FetchInfo(tileSchema.Extent.ToMRect(), tileSchema.Resolutions[level].UnitsPerPixel);
 
             // Act
-            fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[level].UnitsPerPixel);
+            fetchDispatcher.SetViewport(fetchInfo);
             tileMachine.Start();
             while (fetchDispatcher.Busy) { Thread.Sleep(1); }
 
             var tileCountAfterFirstBatch = tileProvider.TotalCount;
 
             // Act again
-            fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[level].UnitsPerPixel);
+            fetchDispatcher.SetViewport(fetchInfo);
             tileMachine.Start();
             while (fetchDispatcher.Busy) { Thread.Sleep(1); }
 
@@ -165,16 +170,17 @@ namespace Mapsui.Tests.Fetcher
             var tileProvider = new CountingTileProvider();
             var tileSchema = new GlobalSphericalMercator();
             var tileSource = new TileSource(tileProvider, tileSchema);
-            var cache = new MemoryCache<Feature>();
+            var cache = new MemoryCache<RasterFeature?>();
             var fetchDispatcher = new TileFetchDispatcher(cache, tileSource.Schema, tileInfo => TileToFeature(tileSource, tileInfo));
             var tileMachine = new FetchMachine(fetchDispatcher);
             var numberOfWorkers = 8;
             var numberOfRestarts = 3;
+            var fetchInfo = new FetchInfo(tileSchema.Extent.ToMRect(), tileSchema.Resolutions[3].UnitsPerPixel);
 
             // Act
-            for (int i = 0; i < numberOfRestarts; i++)
+            for (var i = 0; i < numberOfRestarts; i++)
             {
-                fetchDispatcher.SetViewport(tileSchema.Extent.ToBoundingBox(), tileSchema.Resolutions[3].UnitsPerPixel);
+                fetchDispatcher.SetViewport(fetchInfo);
                 tileMachine.Start();
                 while (fetchDispatcher.Busy) { Thread.Sleep(1); }
             }
@@ -183,7 +189,7 @@ namespace Mapsui.Tests.Fetcher
             Assert.Greater(numberOfWorkers * numberOfRestarts, FetchWorker.RestartCounter);
         }
 
-        private Feature TileToFeature(ITileSource tileProvider, TileInfo tileInfo)
+        private RasterFeature TileToFeature(ITileSource tileProvider, TileInfo tileInfo)
         {
             var tile = tileProvider.GetTile(tileInfo);
             // A tile layer can return a null value. This indicates the tile is not
@@ -195,8 +201,8 @@ namespace Mapsui.Tests.Fetcher
             // 
             // Note, the fact that we have to define this complex method on the outside
             // indicates a design flaw.
-            if (tile == null) return new Feature { Geometry = null }; 
-            return new Feature { Geometry = new Raster(new MemoryStream(tile), tileInfo.Extent.ToBoundingBox()) };
+            if (tile == null) return new RasterFeature((MRaster?)null);
+            return new RasterFeature(new MRaster(new MemoryStream(tile), tileInfo.Extent.ToMRect()));
         }
     }
 }

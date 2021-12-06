@@ -47,7 +47,7 @@ namespace Mapsui.Geometries.Utilities
         /// <returns>Returns the angle in radians</returns>
         public static double DegreesToRadians(double degrees)
         {
-            return degrees*Math.PI/180.0;
+            return degrees * Math.PI / 180.0;
         }
 
         /// <summary>
@@ -75,8 +75,8 @@ namespace Mapsui.Geometries.Utilities
         {
             var cos = Math.Cos(-radians);
             var sin = Math.Sin(-radians);
-            var newX = x*cos - y*sin;
-            var newY = x*sin + y*cos;
+            var newX = x * cos - y * sin;
+            var newY = x * sin + y * cos;
 
             return new Point(newX, newY);
         }
@@ -142,7 +142,7 @@ namespace Mapsui.Geometries.Utilities
             var next2Y = nextPoint.Y - hip.Y;
             // compute cross-product of vectors hip->next and hip->prev
             // (e.g. area of parallelogram they enclose)
-            var disc = next2X*prev2Y - next2Y*prev2X;
+            var disc = next2X * prev2Y - next2Y * prev2X;
             // If disc is exactly 0, lines are collinear.  There are two possible cases:
             //	(1) the lines lie along the x axis in opposite directions
             //	(2) the line lie on top of one another
@@ -161,20 +161,24 @@ namespace Mapsui.Geometries.Utilities
         {
             // taken from: http://stackoverflow.com/a/2922778/85325
             var result = false;
-            
+
             for (int i = 0, j = ring.Count - 1; i < ring.Count; j = i++)
             {
                 if ((ring[i].Y > point.Y != ring[j].Y > point.Y) &&
-                    (point.X < (ring[j].X - ring[i].X)*(point.Y - ring[i].Y)/(ring[j].Y - ring[i].Y) + ring[i].X))
+                    (point.X < (ring[j].X - ring[i].X) * (point.Y - ring[i].Y) / (ring[j].Y - ring[i].Y) + ring[i].X))
                     result = !result;
             }
 
             return result;
         }
 
-        public static double DistanceToLine(Point point, IList<Point> points)
+        public static double DistanceToLine(Point point, IList<Point>? points)
         {
-            var minDist = Double.MaxValue;
+            var minDist = double.MaxValue;
+            if (points == null)
+            {
+                return minDist;
+            }
 
             for (var i = 0; i < points.Count - 1; i++)
             {
@@ -193,10 +197,10 @@ namespace Mapsui.Geometries.Utilities
         /// <param name="point"></param>
         /// <param name="points"></param>
         /// <returns></returns>
-        public static (double Distance, int Segment ) GetDistanceAndSegmentIndex(Point point, IList<Point> points)
+        public static (double Distance, int Segment) GetDistanceAndSegmentIndex(Point point, IList<Point> points)
         {
-            var minDist = Double.MaxValue;
-            int segment = 0;
+            var minDist = double.MaxValue;
+            var segment = 0;
 
             for (var i = 0; i < points.Count - 1; i++)
             {

@@ -11,7 +11,7 @@ namespace Mapsui.Samples.Uwp
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
     // ReSharper disable once RedundantExtendsListEntry
-    sealed partial class App : Application
+    public sealed partial class App : Application
     {
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -33,10 +33,12 @@ namespace Mapsui.Samples.Uwp
 #if DEBUG
             if (System.Diagnostics.Debugger.IsAttached)
             {
+#pragma warning disable Uno0001 // Uno type or member is not implemented
                 DebugSettings.EnableFrameRateCounter = true;
+#pragma warning restore Uno0001 // Uno type or member is not implemented
             }
 #endif
-            Frame rootFrame = Window.Current.Content as Frame;
+            var rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
             // just ensure that the window is active

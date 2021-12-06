@@ -80,7 +80,7 @@ namespace Mapsui.Geometries
         /// </summary>
         /// <param name="other">Other object to compare</param>
         /// <returns>Returns true if they are equal</returns>
-        public bool Equals(Quad other)
+        public bool Equals(Quad? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -142,9 +142,9 @@ namespace Mapsui.Geometries
             unchecked
             {
                 var hashCode = BottomLeft != null ? BottomLeft.GetHashCode() : 0;
-                hashCode = (hashCode*397) ^ (TopLeft != null ? TopLeft.GetHashCode() : 0);
-                hashCode = (hashCode*397) ^ (TopRight != null ? TopRight.GetHashCode() : 0);
-                hashCode = (hashCode*397) ^ (BottomRight != null ? BottomRight.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (TopLeft != null ? TopLeft.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (TopRight != null ? TopRight.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (BottomRight != null ? BottomRight.GetHashCode() : 0);
                 return hashCode;
             }
         }
@@ -159,7 +159,7 @@ namespace Mapsui.Geometries
                 ToString(BottomLeft), ToString(TopLeft), ToString(TopRight), ToString(BottomRight));
         }
 
-        private static string ToString(Point p)
+        private static string ToString(Point? p)
         {
             if (p == null)
                 return "";

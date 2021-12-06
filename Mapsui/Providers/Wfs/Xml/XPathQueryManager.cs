@@ -18,14 +18,14 @@ namespace Mapsui.Providers.Wfs.Xml
     /// </summary>
     public class XPathQueryManager : IXPathQueryManager
     {
-        
-        private CustomQueryContext _paramContext;
-        private XPathNodeIterator _xIter;
-        private XPathNavigator _xNav;
-        private XPathDocument _xPathDoc;
 
-        
-        
+        private CustomQueryContext? _paramContext;
+        private XPathNodeIterator? _xIter;
+        private XPathNavigator? _xNav;
+        private XPathDocument? _xPathDoc;
+
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="XPathQueryManager"/> class.
         /// </summary>
@@ -55,7 +55,7 @@ namespace Mapsui.Providers.Wfs.Xml
         /// Initializes a new instance of the <see cref="XPathQueryManager"/> class.
         /// </summary>
         /// <param name="xPathDoc">An XmlDocument instance</param>
-        public XPathQueryManager(XPathDocument xPathDoc)
+        public XPathQueryManager(XPathDocument? xPathDoc)
         {
             SetDocumentToParse(xPathDoc);
             _paramContext = new CustomQueryContext(new NameTable());
@@ -85,9 +85,9 @@ namespace Mapsui.Providers.Wfs.Xml
         /// <param name="xPathDoc">An XmlDocument instance</param>
         /// <param name="xNav"></param>
         /// <param name="paramContext">A <see cref="XPathQueryManager.CustomQueryContext"/> instance for parameterized XPath expressions</param>
-        private XPathQueryManager(XPathDocument xPathDoc, XPathNavigator xNav, CustomQueryContext paramContext)
+        private XPathQueryManager(XPathDocument? xPathDoc, XPathNavigator? xNav, CustomQueryContext? paramContext)
         {
-            _xNav = xNav.Clone();
+            _xNav = xNav?.Clone();
             SetDocumentToParse(xPathDoc);
             InitializeCustomContext(paramContext);
         }
@@ -98,7 +98,7 @@ namespace Mapsui.Providers.Wfs.Xml
         /// <param name="xPathDoc">An XmlDocument instance</param>
         /// <param name="xIter">An XPathNodeIterator instance</param>
         /// <param name="paramContext">A <see cref="XPathQueryManager.CustomQueryContext"/> instance for parameterized XPath expressions</param>
-        private XPathQueryManager(XPathDocument xPathDoc, XPathNodeIterator xIter, CustomQueryContext paramContext)
+        private XPathQueryManager(XPathDocument? xPathDoc, XPathNodeIterator? xIter, CustomQueryContext? paramContext)
             : this(xPathDoc)
         {
             if (xIter != null)
@@ -106,8 +106,8 @@ namespace Mapsui.Providers.Wfs.Xml
             InitializeCustomContext(paramContext);
         }
 
-        
-        
+
+
         /// <summary>
         /// This method adds a namespace for XPath queries.
         /// </summary>
@@ -115,7 +115,8 @@ namespace Mapsui.Providers.Wfs.Xml
         /// <param name="ns">The namespace URI</param>
         public void AddNamespace(string prefix, string ns)
         {
-            _paramContext.AddNamespace(prefix, ns);
+            if (_paramContext != null)
+                _paramContext.AddNamespace(prefix, ns);
         }
 
         /// <summary>
@@ -123,9 +124,9 @@ namespace Mapsui.Providers.Wfs.Xml
         /// </summary>
         /// <param name="xPath">The XPath string</param>
         /// <returns>A compiled XPath expression</returns>
-        public XPathExpression Compile(string xPath)
+        public XPathExpression? Compile(string xPath)
         {
-            return _xNav.Compile(xPath);
+            return _xNav?.Compile(xPath);
         }
 
         /// <summary>
@@ -142,10 +143,10 @@ namespace Mapsui.Providers.Wfs.Xml
         /// the XPath expression addresses.
         /// </summary>
         /// <param name="xPath">The compiled XPath expression</param>
-        public XPathNodeIterator GetIterator(XPathExpression xPath)
+        public XPathNodeIterator? GetIterator(XPathExpression? xPath)
         {
             FindXPath(xPath);
-            return _xIter.Clone();
+            return _xIter?.Clone();
         }
 
         /// <summary>
@@ -154,9 +155,10 @@ namespace Mapsui.Providers.Wfs.Xml
         /// </summary>
         /// <param name="xPath">The compiled XPath expression</param>
         /// <param name="queryParameters">Parameters for the compiled XPath expression</param>
-        public XPathNodeIterator GetIterator(XPathExpression xPath, DictionaryEntry[] queryParameters)
+        public XPathNodeIterator? GetIterator(XPathExpression xPath, DictionaryEntry[] queryParameters)
         {
-            _paramContext.AddParam(queryParameters);
+            if (_paramContext != null)
+                _paramContext.AddParam(queryParameters);
             return GetIterator(xPath);
         }
 
@@ -165,13 +167,14 @@ namespace Mapsui.Providers.Wfs.Xml
         /// </summary>
         /// <param name="xPath">The compiled XPath expression</param>
         /// <param name="queryParameters">Parameters for the compiled XPath expression</param>
-        public string GetValueFromNode(XPathExpression xPath, DictionaryEntry[] queryParameters = null)
+        public string? GetValueFromNode(XPathExpression? xPath, DictionaryEntry[]? queryParameters = null)
         {
-            if (queryParameters != null) _paramContext.AddParam(queryParameters);
-            string result = null;
+            if (queryParameters != null && _paramContext != null)
+                _paramContext.AddParam(queryParameters);
+            string? result = null;
             FindXPath(xPath);
-            if (_xIter.MoveNext())
-                result = _xIter.Current.Value;
+            if (_xIter?.MoveNext() ?? false)
+                result = _xIter?.Current?.Value;
             return result;
         }
 
@@ -183,8 +186,9 @@ namespace Mapsui.Providers.Wfs.Xml
         {
             var valuesList = new List<string>();
             FindXPath(xPath);
-            while (_xIter.MoveNext())
-                valuesList.Add(_xIter.Current.ToString());
+            while (_xIter?.MoveNext() ?? false)
+                if (_xIter.Current != null)
+                    valuesList.Add(_xIter.Current.ToString());
             return valuesList;
         }
 
@@ -195,7 +199,8 @@ namespace Mapsui.Providers.Wfs.Xml
         /// <param name="queryParameters">Parameters for the compiled XPath expression</param>
         public List<string> GetValuesFromNodes(XPathExpression xPath, DictionaryEntry[] queryParameters)
         {
-            _paramContext.AddParam(queryParameters);
+            if (_paramContext != null)
+                _paramContext.AddParam(queryParameters);
             return GetValuesFromNodes(xPath);
         }
 
@@ -205,11 +210,11 @@ namespace Mapsui.Providers.Wfs.Xml
         /// </summary>
         /// <param name="xPath">The compiled XPath expression</param>
         /// <param name="queryParameters">Parameters for the compiled XPath expression</param>
-        public IXPathQueryManager GetXPathQueryManagerInContext(XPathExpression xPath, DictionaryEntry[] queryParameters = null)
+        public IXPathQueryManager? GetXPathQueryManagerInContext(XPathExpression? xPath, DictionaryEntry[]? queryParameters = null)
         {
-            if (queryParameters != null) _paramContext.AddParam(queryParameters);
+            if (queryParameters != null && _paramContext != null) _paramContext.AddParam(queryParameters);
             FindXPath(xPath);
-            if (_xIter.MoveNext())
+            if (_xIter?.MoveNext() ?? false)
                 return new XPathQueryManager(_xPathDoc, _xIter, _paramContext);
             return null;
         }
@@ -273,16 +278,16 @@ namespace Mapsui.Providers.Wfs.Xml
             }
         }
 
-        
-        
+
+
         /// <summary>
         /// Sets a new XML document.
         /// </summary>
         /// <param name="xPathDoc">An XPathDocument instance</param>
-        private void SetDocumentToParse(XPathDocument xPathDoc)
+        private void SetDocumentToParse(XPathDocument? xPathDoc)
         {
             _xPathDoc = xPathDoc;
-            if (_xNav == null) _xNav = _xPathDoc.CreateNavigator().Clone();
+            _xNav ??= _xPathDoc?.CreateNavigator().Clone();
         }
 
         /// <summary>
@@ -320,34 +325,37 @@ namespace Mapsui.Providers.Wfs.Xml
         /// This method sets the inherent XPathNodeIterator instance.
         /// </summary>
         /// <param name="xPath">A compiled XPath expression</param>
-        private void FindXPath(XPathExpression xPath)
+        private void FindXPath(XPathExpression? xPath)
         {
-            xPath.SetContext(_paramContext);
-            _xIter = _xNav.Select(xPath);
+            xPath?.SetContext(_paramContext);
+            if (xPath != null)
+                _xIter = _xNav?.Select(xPath);
             InitializeCustomContext(_paramContext);
         }
 
-        private void InitializeCustomContext(CustomQueryContext paramContext)
+        private void InitializeCustomContext(CustomQueryContext? paramContext)
         {
-            IDictionary<string, string> namespaces = paramContext.GetNamespacesInScope(XmlNamespaceScope.ExcludeXml);
-            _paramContext = new CustomQueryContext((NameTable) paramContext.NameTable);
-            _paramContext.AddNamespace(namespaces);
+            if (paramContext == null)
+                return;
+            var namespaces = paramContext.GetNamespacesInScope(XmlNamespaceScope.ExcludeXml);
+            _paramContext = new CustomQueryContext((NameTable)paramContext.NameTable);
+            if (namespaces != null)
+            {
+                _paramContext.AddNamespace(namespaces);
+            }
         }
 
-        
-        
-        
         /// <summary>
         /// This class represents a custom context for XPath queries.
         /// It is derived from XsltContext.
         /// </summary>
         public class CustomQueryContext : XsltContext
         {
-            
+
             private readonly XsltArgumentList _argumentList = new XsltArgumentList();
 
-            
-            
+
+
             /// <summary>
             /// Initializes a new instance of the <see cref="CustomQueryContext"/> class.
             /// </summary>
@@ -364,15 +372,12 @@ namespace Mapsui.Providers.Wfs.Xml
             {
             }
 
-            
-            
+
+
             /// <summary>
             /// Method from XsltContext.
             /// </summary>
-            public override bool Whitespace
-            {
-                get { return true; }
-            }
+            public override bool Whitespace => true;
 
             /// <summary>
             /// This method adds a list of namespaces to use in the custom context.
@@ -380,7 +385,7 @@ namespace Mapsui.Providers.Wfs.Xml
             /// <param name="namespaces">A list of namespaces</param>
             public void AddNamespace(IDictionary<string, string> namespaces)
             {
-                foreach (string ns in namespaces.Keys)
+                foreach (var ns in namespaces.Keys)
                     AddNamespace(ns, namespaces[ns]);
             }
 
@@ -406,7 +411,7 @@ namespace Mapsui.Providers.Wfs.Xml
             /// <param name="prefix">The prefix of the function</param>
             /// <param name="name">The name of the function</param>
             /// <param name="argTypes">A list of argument types of the function</param>
-            public override IXsltContextFunction ResolveFunction(string prefix, string name, XPathResultType[] argTypes)
+            public override IXsltContextFunction? ResolveFunction(string prefix, string name, XPathResultType[] argTypes)
             {
                 if (name.Equals(ParamCompare.FunctionName)) return new ParamCompare(argTypes, 2, 2);
                 if (name.Equals(ParamCompareWithTargetNs.FunctionName))
@@ -419,9 +424,9 @@ namespace Mapsui.Providers.Wfs.Xml
             /// </summary>
             /// <param name="prefix">The prefix of the variable</param>
             /// <param name="name">The name of the variable</param>
-            public override IXsltContextVariable ResolveVariable(string prefix, string name)
+            public override IXsltContextVariable? ResolveVariable(string prefix, string name)
             {
-                object param = GetParam(name);
+                var param = GetParam(name);
                 if (param != null)
                     return new ParamFunctionVar(param);
                 return null;
@@ -443,8 +448,8 @@ namespace Mapsui.Providers.Wfs.Xml
             /// <param name="parameters">A list of parameters</param>
             public void AddParam(DictionaryEntry[] parameters)
             {
-                int length = parameters.Length;
-                for (int i = 0; i < length; i++)
+                var length = parameters.Length;
+                for (var i = 0; i < length; i++)
                     _argumentList.AddParam(parameters[i].Key.ToString(),
                                            string.Empty, parameters[i].Value.ToString());
             }
@@ -475,57 +480,45 @@ namespace Mapsui.Providers.Wfs.Xml
                 _argumentList.Clear();
             }
 
-                    }
+        }
 
-        
-        
+
+
         /// <summary>
         /// This class is the base class of <see cref="ParamCompare"/> and <see cref="ParamCompareWithTargetNs"/>.
         /// </summary>
         public abstract class ParamBase
         {
-            
+
             private readonly XPathResultType[] _argTypes;
             private readonly int _maxArgs;
             private readonly int _minArgs;
             private readonly XPathResultType _returnType;
 
-            
-            
+
+
             /// <summary>
             /// Gets the argument types.
             /// </summary>
-            public XPathResultType[] ArgTypes
-            {
-                get { return _argTypes; }
-            }
+            public XPathResultType[] ArgTypes => _argTypes;
 
             /// <summary>
             /// Gets the return type.
             /// </summary>
-            public XPathResultType ReturnType
-            {
-                get { return _returnType; }
-            }
+            public XPathResultType ReturnType => _returnType;
 
             /// <summary>
             /// Gets the minimum number of arguments allowed.
             /// </summary>
-            public int Minargs
-            {
-                get { return _minArgs; }
-            }
+            public int Minargs => _minArgs;
 
             /// <summary>
             /// Gets the maximum number of arguments allowed.
             /// </summary>
-            public int Maxargs
-            {
-                get { return _maxArgs; }
-            }
+            public int Maxargs => _maxArgs;
 
-            
-            
+
+
             /// <summary>
             /// Protected constructor for the abstract class.
             /// </summary>
@@ -542,23 +535,23 @@ namespace Mapsui.Providers.Wfs.Xml
                 _maxArgs = maxArgs;
             }
 
-                    }
+        }
 
-        
-        
+
+
         /// <summary>
         /// This class performs a string comparison in an XPath expression.
         /// </summary>
         public class ParamCompare : ParamBase, IXsltContextFunction
         {
-            
+
             /// <summary>
             /// The name to use when embedding the function in an XPath expression.
             /// </summary>
             public static readonly string FunctionName = "_PARAMCOMP_";
 
-            
-            
+
+
             /// <summary>
             /// Initializes a new instance of the <see cref="ParamCompare"/> class.
             /// </summary>
@@ -570,8 +563,8 @@ namespace Mapsui.Providers.Wfs.Xml
             {
             }
 
-            
-            
+
+
             /// <summary>
             /// This method performs a string comparison.
             /// </summary>
@@ -585,8 +578,8 @@ namespace Mapsui.Providers.Wfs.Xml
                     ResolveNsPrefix(ResolveArgument(args[1]), xsltContext), StringComparison.Ordinal);
             }
 
-            
-            
+
+
             /// <summary>
             /// This method creates a string from an object argument.
             /// In many cases the argument is an XPathNodeIterator that must be resolved.
@@ -605,8 +598,8 @@ namespace Mapsui.Providers.Wfs.Xml
                 return string.Empty;
             }
 
-            
-            
+
+
             /// <summary>
             /// This method resolves the prefix of an argument.
             /// If a prefix is found, the corresponding namespace URI is looked up 
@@ -618,7 +611,7 @@ namespace Mapsui.Providers.Wfs.Xml
             {
                 if (args.Contains(":"))
                 {
-                    string prefix = args.Substring(0, args.IndexOf(":", StringComparison.Ordinal));
+                    var prefix = args.Substring(0, args.IndexOf(":", StringComparison.Ordinal));
                     string ns;
                     if (!string.IsNullOrEmpty((ns = xsltContext.LookupNamespace(prefix))))
                         args = args.Replace(prefix + ":", ns);
@@ -626,24 +619,24 @@ namespace Mapsui.Providers.Wfs.Xml
                 return args;
             }
 
-                    }
+        }
 
-        
-        
+
+
         /// <summary>
         /// This class performs a string comparison in an XPath expression.
         /// It is specifically created for using in XML schema documents.
         /// </summary>
         public class ParamCompareWithTargetNs : ParamCompare
         {
-            
+
             /// <summary>
             /// The name to use when embedding the function in an XPath expression.
             /// </summary>
-            public new static readonly string FunctionName = "_PARAMCOMPWITHTARGETNS_";
+            public static readonly new string FunctionName = "_PARAMCOMPWITHTARGETNS_";
 
-            
-            
+
+
             /// <summary>
             /// Initializes a new instance of the <see cref="ParamCompareWithTargetNs"/> class.
             /// </summary>
@@ -655,8 +648,8 @@ namespace Mapsui.Providers.Wfs.Xml
             {
             }
 
-            
-            
+
+
             /// <summary>
             /// This method performs a string comparison.
             /// </summary>
@@ -666,12 +659,12 @@ namespace Mapsui.Providers.Wfs.Xml
             /// <returns>A boolean value indicating whether the argument strings are identical</returns>
             public override object Invoke(XsltContext xsltContext, object[] args, XPathNavigator docContext)
             {
-                return (((string) args[1] + ResolveArgument(args[2]))).Equals(
-                    resolveNsPrefix(ResolveArgument(args[0]), (string) args[1], docContext), StringComparison.Ordinal);
+                return (((string)args[1] + ResolveArgument(args[2]))).Equals(
+                    resolveNsPrefix(ResolveArgument(args[0]), (string)args[1], docContext), StringComparison.Ordinal);
             }
 
-            
-            
+
+
             /// <summary>
             /// This method resolves the prefix of an argument.
             /// If a prefix is found, the corresponding namespace URI (if existing) is looked up 
@@ -684,7 +677,7 @@ namespace Mapsui.Providers.Wfs.Xml
             {
                 if (args.Contains(":"))
                 {
-                    string prefix = args.Substring(0, args.IndexOf(":", StringComparison.Ordinal));
+                    var prefix = args.Substring(0, args.IndexOf(":", StringComparison.Ordinal));
                     string ns;
                     if (!string.IsNullOrEmpty((ns = docContext.LookupNamespace(prefix))))
                         return args.Replace(prefix + ":", ns);
@@ -693,20 +686,20 @@ namespace Mapsui.Providers.Wfs.Xml
                 return targetNs + args;
             }
 
-                    }
+        }
 
-        
-        
+
+
         /// <summary>
         /// This class represents a variable in an XPath expression.
         /// </summary>
         public class ParamFunctionVar : IXsltContextVariable
         {
-            
+
             private readonly object _param;
 
-            
-            
+
+
             /// <summary>
             /// Initializes a new instance of the <see cref="ParamFunctionVar"/> class.
             /// </summary>
@@ -716,8 +709,8 @@ namespace Mapsui.Providers.Wfs.Xml
                 _param = param;
             }
 
-            
-            
+
+
             /// <summary>
             /// Method implementing IXsltContextVariable
             /// </summary>
@@ -729,29 +722,20 @@ namespace Mapsui.Providers.Wfs.Xml
             /// <summary>
             /// Method implementing IXsltContextVariable
             /// </summary>
-            public bool IsLocal
-            {
-                get { return true; }
-            }
+            public bool IsLocal => true;
 
             /// <summary>
             /// Method implementing IXsltContextVariable
             /// </summary>
-            public bool IsParam
-            {
-                get { return true; }
-            }
+            public bool IsParam => true;
 
             /// <summary>
             /// Method implementing IXsltContextVariable
             /// </summary>
-            public XPathResultType VariableType
-            {
-                get { return XPathResultType.Any; }
-            }
+            public XPathResultType VariableType => XPathResultType.Any;
 
-                    }
+        }
 
-        
-            }
+
+    }
 }

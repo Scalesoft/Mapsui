@@ -1,7 +1,10 @@
 ﻿using System.Linq;
+using Mapsui.Extensions;
 using Mapsui.Geometries;
+using Mapsui.GeometryLayer;
 using Mapsui.Layers;
-using Mapsui.Projection;
+using Mapsui.Layers.Tiling;
+using Mapsui.Projections;
 using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.UI;
@@ -25,18 +28,18 @@ namespace Mapsui.Samples.Common.Maps
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
             var lineStringLayer = CreateLineStringLayer(CreateLineStringStyle());
             map.Layers.Add(lineStringLayer);
-            map.Home = n => n.NavigateTo(lineStringLayer.Envelope.Centroid, 200);
+            map.Home = n => n.NavigateTo(lineStringLayer.Extent?.Centroid, 200);
             return map;
         }
 
-        public static ILayer CreateLineStringLayer(IStyle style = null)
+        public static ILayer CreateLineStringLayer(IStyle? style = null)
         {
             var lineString = (LineString)Geometry.GeomFromText(WKTGr5);
-            lineString = new LineString(lineString.Vertices.Select(v => SphericalMercator.FromLonLat(v.Y, v.X)));
+            lineString = new LineString(lineString.Vertices.Select(v => SphericalMercator.FromLonLat(v.Y, v.X).ToMPoint().ToPoint()));
 
             return new MemoryLayer
             {
-                DataSource = new MemoryProvider(new Feature { Geometry = lineString }),
+                DataSource = new MemoryProvider<IFeature>(new GeometryFeature { Geometry = lineString }),
                 Name = "LineStringLayer",
                 Style = style
             };
@@ -48,7 +51,8 @@ namespace Mapsui.Samples.Common.Maps
             {
                 Fill = null,
                 Outline = null,
-                Line = { Color = Color.FromString("YellowGreen"), Width = 4}
+#pragma warning disable CS8670 // Object or collection initializer implicitly dereferences possibly null member.
+                Line = { Color = Color.FromString("YellowGreen"), Width = 4 }
             };
         }
 

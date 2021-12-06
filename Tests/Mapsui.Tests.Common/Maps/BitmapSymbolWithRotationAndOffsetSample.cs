@@ -1,5 +1,7 @@
-﻿using System.Reflection;
+﻿using System.Collections.Generic;
+using System.Reflection;
 using Mapsui.Geometries;
+using Mapsui.GeometryLayer;
 using Mapsui.Layers;
 using Mapsui.Providers;
 using Mapsui.Samples.Common;
@@ -20,26 +22,29 @@ namespace Mapsui.Tests.Common.Maps
 
         public static Map CreateMap()
         {
-            var map = new Map
-            {
-                BackColor = Color.Transparent,
-                Home = n => n.NavigateTo(new Point(80, 80), 1)
-            };
             var layer = new MemoryLayer
             {
                 DataSource = CreateProviderWithRotatedBitmapSymbols(),
                 Name = "Points with rotated bitmaps",
                 Style = null
             };
+
+            var map = new Map
+            {
+                BackColor = Color.FromString("WhiteSmoke"),
+                Home = n => n.NavigateTo(layer.Extent?.Grow(layer.Extent.Width * 2))
+            };
+
             map.Layers.Add(layer);
+
             return map;
         }
 
-        private static IProvider CreateProviderWithRotatedBitmapSymbols()
+        private static IProvider<IFeature> CreateProviderWithRotatedBitmapSymbols()
         {
-            var features = new Features
+            var features = new List<IFeature>
             {
-                new Feature
+                new GeometryFeature
                 {
                     Geometry = new Point(75, 75),
                     Styles = new[] {new SymbolStyle {Fill = new Brush(Color.Red)}}
@@ -48,21 +53,21 @@ namespace Mapsui.Tests.Common.Maps
                 CreateFeatureWithRotatedBitmapSymbol(125, 125, 180),
                 CreateFeatureWithRotatedBitmapSymbol(125, 75, 270)
             };
-            return new MemoryProvider(features);
+            return new MemoryProvider<IFeature>(features);
         }
 
-        private static Feature CreateFeatureWithRotatedBitmapSymbol(double x, double y, double rotation)
+        private static GeometryFeature CreateFeatureWithRotatedBitmapSymbol(double x, double y, double rotation)
         {
             const string bitmapPath = @"Mapsui.Tests.Common.Resources.Images.iconthatneedsoffset.png";
             var bitmapStream = typeof(Utilities).GetTypeInfo().Assembly.GetManifestResourceStream(bitmapPath);
             var bitmapId = BitmapRegistry.Instance.Register(bitmapStream);
 
-            var feature = new Feature {Geometry = new Point(x, y)};
+            var feature = new GeometryFeature { Geometry = new Point(x, y) };
 
             feature.Styles.Add(new SymbolStyle
             {
                 BitmapId = bitmapId,
-                SymbolOffset = new Offset {Y = -24},
+                SymbolOffset = new Offset { Y = -24 },
                 SymbolRotation = rotation,
                 RotateWithMap = true,
                 SymbolType = SymbolType.Triangle

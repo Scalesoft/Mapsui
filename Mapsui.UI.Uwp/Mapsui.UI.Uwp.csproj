@@ -104,12 +104,16 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ExtensionMethods\PointExtensions.cs" />
+    <Compile Include="Extensions\PointExtensions.cs" />
     <Compile Include="MapControl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Mapsui.UI.Uwp.rd.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Mapsui.Core\Mapsui.Core.csproj">
+      <Project>{7f15a600-a0c7-400e-bfbe-83105fadbc63}</Project>
+      <Name>Mapsui.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Mapsui.Geometries\Mapsui.Geometries.csproj">
       <Project>{ee55b62d-ffa2-4c24-a4ad-7a47ace55ce5}</Project>
       <Name>Mapsui.Geometries</Name>

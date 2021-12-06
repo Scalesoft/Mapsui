@@ -5,8 +5,8 @@ using System.Text;
 using Mapsui.UI.iOS;
 using UIKit;
 using CoreGraphics;
+using Mapsui.GeometryLayer;
 using Mapsui.UI;
-using Mapsui.Providers;
 using Mapsui.Samples.Common.Helpers;
 using Mapsui.Samples.Common.Maps;
 
@@ -27,14 +27,14 @@ namespace Mapsui.Samples.iOS
             // Never tested this. PDD.
             MbTilesHelper.DeployMbTilesFile(s => File.Create(Path.Combine(MbTilesLocationOnIos, s)));
 
-            var mapControl = CreateMap(View.Bounds);
+            var mapControl = CreateMap(View!.Bounds);
             mapControl.Info += MapOnInfo;
             View = mapControl;
         }
 
         private void MapOnInfo(object sender, MapInfoEventArgs e)
         {
-            if (e.MapInfo.Feature == null) return;
+            if (e.MapInfo?.Feature == null) return;
             Debug.WriteLine(ToString(e.MapInfo.Feature));
         }
 
@@ -45,8 +45,9 @@ namespace Mapsui.Samples.iOS
             {
                 result.Append($"{field}={feature[field]}, ");
             }
-            
-            result.Append($"Geometry={feature.Geometry}");
+
+            if (feature is GeometryFeature geometryFeature)
+                result.Append($"Geometry={geometryFeature.Geometry}");
             return result.ToString();
         }
 
@@ -57,7 +58,7 @@ namespace Mapsui.Samples.iOS
                 Map = InfoLayersSample.CreateMap(),
                 UnSnapRotationDegrees = 30,
                 ReSnapRotationDegrees = 5
-            };                        
+            };
         }
 
         private static string MbTilesLocationOnIos => Environment.GetFolderPath(Environment.SpecialFolder.Personal);

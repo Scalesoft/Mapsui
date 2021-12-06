@@ -1,8 +1,7 @@
 ﻿using Mapsui.Widgets;
-using Mapsui.Widgets.Button;
+using Mapsui.Widgets.ButtonWidget;
 using SkiaSharp;
 using Svg.Skia;
-using System;
 
 namespace Mapsui.Rendering.Skia.SkiaWidgets
 {
@@ -12,23 +11,25 @@ namespace Mapsui.Rendering.Skia.SkiaWidgets
         {
             var button = (ButtonWidget)widget;
 
-            if (button.Picture == null && string.IsNullOrEmpty(button.SVGImage))
+            if (button.Picture == null && string.IsNullOrEmpty(button.SvgImage))
                 return;
 
-            if (button.Picture == null)
-                button.Picture = new SKSvg().FromSvg(button.SVGImage);
+            button.Picture ??= button.SvgImage == null ? null : new SKSvg().FromSvg(button.SvgImage);
 
             var picture = button.Picture as SKPicture;
 
             if (picture == null)
                 return;
 
+            if (button.Envelope == null)
+                return;
+
             // Get the scale for picture in each direction
-            float scaleX = (float)(button.Envelope.Width / picture.CullRect.Width);
-            float scaleY = (float)(button.Envelope.Height / picture.CullRect.Height);
+            var scaleX = (float)(button.Envelope.Width / picture.CullRect.Width);
+            var scaleY = (float)(button.Envelope.Height / picture.CullRect.Height);
 
             // Rotate picture
-            var matrix = SKMatrix.CreateRotationDegrees((float)button.Rotation, picture.CullRect.Width / 2f, picture.CullRect.Height / 2f);
+            var matrix = SKMatrix.CreateRotationDegrees(button.Rotation, picture.CullRect.Width / 2f, picture.CullRect.Height / 2f);
 
             // Create a scale matrix
             matrix = matrix.PostConcat(SKMatrix.CreateScale(scaleX, scaleY));
@@ -36,7 +37,7 @@ namespace Mapsui.Rendering.Skia.SkiaWidgets
             // Translate picture to right place
             matrix = matrix.PostConcat(SKMatrix.CreateTranslation((float)button.Envelope.MinX, (float)button.Envelope.MinY));
 
-            canvas.DrawPicture(picture, ref matrix, new SKPaint() { IsAntialias = true });
+            canvas.DrawPicture(picture, ref matrix, new SKPaint { IsAntialias = true });
         }
     }
 }

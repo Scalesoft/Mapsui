@@ -4,7 +4,7 @@ using System.Linq;
 using Mapsui.Geometries;
 using SkiaSharp;
 
-namespace Mapsui.Rendering.Skia
+namespace Mapsui.Rendering.Skia.Extensions
 {
     public static class ClippingExtension
     {
@@ -21,7 +21,7 @@ namespace Mapsui.Rendering.Skia
             var vertices = WorldToScreen(viewport, lineString);
 
             var path = new SKPath();
-            SKPoint lastPoint = SKPoint.Empty;
+            var lastPoint = SKPoint.Empty;
 
             for (var i = 1; i < vertices.Count; i++)
             {
@@ -30,7 +30,7 @@ namespace Mapsui.Rendering.Skia
 
                 if (intersect != Intersection.CompleteOutside)
                 {
-                    // If the last point isn't the same as actuall starting point ...
+                    // If the last point isn't the same as actual starting point ...
                     if (lastPoint.IsEmpty || !lastPoint.Equals(intersectionPoint1))
                     {
                         // ... than move to this point
@@ -47,18 +47,18 @@ namespace Mapsui.Rendering.Skia
         }
 
         /// <summary>
-        /// Converts a Polygon into a SKPath, that is clipped to cliptRect, where exterior is bigger than interior
+        /// Converts a Polygon into a SKPath, that is clipped to clipRect, where exterior is bigger than interior
         /// </summary>
         /// <param name="polygon">Polygon to convert</param>
         /// <param name="viewport">Viewport implementation</param>
         /// <param name="clipRect">Rectangle to clip to. All lines outside aren't drawn.</param>
-        /// <param name="strokeWidth">StrokeWidth for inflating cliptRect</param>
+        /// <param name="strokeWidth">StrokeWidth for inflating clipRect</param>
         /// <returns></returns>
         public static SKPath ToSkiaPath(this Polygon polygon, IReadOnlyViewport viewport, SKRect clipRect, float strokeWidth)
         {
             // Reduce exterior ring to parts, that are visible in clipping rectangle
             // Inflate clipRect, so that we could be sure, nothing of stroke is visible on screen
-            var exterior = ReducePointsToClipRect(polygon.ExteriorRing.Vertices, viewport, SKRect.Inflate(clipRect, strokeWidth * 2, strokeWidth * 2));
+            var exterior = ReducePointsToClipRect(polygon.ExteriorRing?.Vertices, viewport, SKRect.Inflate(clipRect, strokeWidth * 2, strokeWidth * 2));
 
             // Create path for exterior and interior parts
             var path = new SKPath();
@@ -139,7 +139,7 @@ namespace Mapsui.Rendering.Skia
         /// <param name="viewport">Viewport implementation</param>
         /// <param name="clipRect">Rectangle to clip to. All points outside aren't drawn.</param>
         /// <returns></returns>
-        private static List<SKPoint> ReducePointsToClipRect(IEnumerable<Point> points, IReadOnlyViewport viewport, SKRect clipRect)
+        private static List<SKPoint> ReducePointsToClipRect(IEnumerable<Point>? points, IReadOnlyViewport viewport, SKRect clipRect)
         {
             var output = WorldToScreen(viewport, points);
 
@@ -147,7 +147,7 @@ namespace Mapsui.Rendering.Skia
             for (var j = 0; j < 4; j++)
             {
                 // If there aren't any points to reduce
-                if (output == null || output.Count == 0)
+                if (output.Count == 0)
                     return new List<SKPoint>();
 
                 // New input list is the last output list of points
@@ -192,9 +192,12 @@ namespace Mapsui.Rendering.Skia
         /// <param name="viewport">Viewport implementation</param>
         /// <param name="points">List of points in Mapsui world coordinates</param>
         /// <returns>List of screen coordinates in SKPoint</returns>
-        private static List<SKPoint> WorldToScreen(IReadOnlyViewport viewport, IEnumerable<Point> points)
+        private static List<SKPoint> WorldToScreen(IReadOnlyViewport viewport, IEnumerable<Point>? points)
         {
             var result = new List<SKPoint>();
+            if (points == null)
+                return result;
+
             var screenCenterX = viewport.Width * 0.5;
             var screenCenterY = viewport.Height * 0.5;
             var centerX = viewport.Center.X;
@@ -241,8 +244,8 @@ namespace Mapsui.Rendering.Skia
         {
             var vx = point2.X - point1.X;
             var vy = point2.Y - point1.Y;
-            var p = new [] { -vx, vx, -vy, vy };
-            var q = new [] { point1.X - clipRect.Left, clipRect.Right - point1.X, point1.Y - clipRect.Top, clipRect.Bottom - point1.Y };
+            var p = new[] { -vx, vx, -vy, vy };
+            var q = new[] { point1.X - clipRect.Left, clipRect.Right - point1.X, point1.Y - clipRect.Top, clipRect.Bottom - point1.Y };
             var u1 = float.NegativeInfinity;
             var u2 = float.PositiveInfinity;
 
@@ -251,7 +254,7 @@ namespace Mapsui.Rendering.Skia
             intersectionPoint2 = point2;
 
             // Check, if points are complete outside
-            for (int i = 0; i < 4; i++)
+            for (var i = 0; i < 4; i++)
             {
                 if (p[i] == 0)
                 {

@@ -6,23 +6,23 @@ using Plugin.Geolocator;
 using Plugin.Geolocator.Abstractions;
 using Mapsui.UI;
 using System.Threading.Tasks;
-using Mapsui.Rendering.Skia;
 using Mapsui.Samples.CustomWidget;
+using Mapsui.Styles;
 using Xamarin.Essentials;
 
 namespace Mapsui.Samples.Forms
 {
-	[XamlCompilation(XamlCompilationOptions.Compile)]
-	public partial class MapPage : ContentPage
-	{
-        public Func<MapView, MapClickedEventArgs, bool> Clicker { get; set; }
+    [XamlCompilation(XamlCompilationOptions.Compile)]
+    public partial class MapPage : ContentPage
+    {
+        public Func<MapView?, MapClickedEventArgs, bool>? Clicker { get; set; }
 
-        public MapPage ()
-		{
+        public MapPage()
+        {
             InitializeComponent();
         }
 
-        public MapPage(Action<IMapControl> setup, Func<MapView, MapClickedEventArgs, bool> c = null)
+        public MapPage(Action<IMapControl> setup, Func<MapView?, MapClickedEventArgs, bool>? c = null)
         {
             InitializeComponent();
 
@@ -60,7 +60,7 @@ namespace Mapsui.Samples.Forms
             mapView.Refresh();
         }
 
-        private void MapView_Info(object sender, UI.MapInfoEventArgs e)
+        private void MapView_Info(object sender, UI.MapInfoEventArgs? e)
         {
             if (e?.MapInfo?.Feature != null)
             {
@@ -79,7 +79,7 @@ namespace Mapsui.Samples.Forms
 
         private void OnMapClicked(object sender, MapClickedEventArgs e)
         {
-            e.Handled = Clicker != null ? (bool)Clicker?.Invoke(sender as MapView, e) : false;
+            e.Handled = Clicker != null ? (Clicker?.Invoke(sender as MapView, e) ?? false) : false;
             //Samples.SetPins(mapView, e);
             //Samples.DrawPolylines(mapView, e);
         }
@@ -153,11 +153,10 @@ namespace Mapsui.Samples.Forms
         /// <param name="e">Event arguments for new position</param>
         private void MyLocationPositionChanged(object sender, PositionEventArgs e)
         {
-            Device.BeginInvokeOnMainThread(() =>
-            {
+            Device.BeginInvokeOnMainThread(() => {
                 var coords = new UI.Forms.Position(e.Position.Latitude, e.Position.Longitude);
                 info.Text = $"{coords.ToString()} - D:{(int)e.Position.Heading} S:{Math.Round(e.Position.Speed, 2)}";
-                
+
                 mapView.MyLocationLayer.UpdateMyLocation(new UI.Forms.Position(e.Position.Latitude, e.Position.Longitude));
                 mapView.MyLocationLayer.UpdateMyDirection(e.Position.Heading, mapView.Viewport.Rotation);
                 mapView.MyLocationLayer.UpdateMySpeed(e.Position.Speed);

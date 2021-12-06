@@ -15,14 +15,14 @@ namespace Mapsui.Providers.Wfs.Xml
     public class XPathQueryManagerCompiledExpressionsDecorator
         : XPathQueryManagerDecoratorBase, IXPathQueryManager
     {
-        
+
         private static readonly Dictionary<string, XPathExpression> CompiledExpressions =
             new Dictionary<string, XPathExpression>();
 
         private static readonly NameTable NameTable = new NameTable();
 
-        
-        
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="XPathQueryManagerCompiledExpressionsDecorator"/> class.
         /// </summary>
@@ -32,23 +32,25 @@ namespace Mapsui.Providers.Wfs.Xml
         {
         }
 
-        
-        
+
+
         /// <summary>
         /// This method compiles an XPath string, if not already saved.  
         /// Otherwise it returns the available XPath compilation. 
         /// </summary>
         /// <param name="xPath">The XPath string</param>
         /// <returns>A compiled XPath expression</returns>
-        public override XPathExpression Compile(string xPath)
+        public override XPathExpression? Compile(string xPath)
         {
-            XPathExpression expr;
+            XPathExpression? expr;
             // Compare pointers instead of literal values
             if (ReferenceEquals(xPath, NameTable.Get(xPath)))
                 return CompiledExpressions[xPath];
 
             NameTable.Add(xPath);
-            CompiledExpressions.Add(xPath, (expr = XPathQueryManager.Compile(xPath)));
+            expr = XPathQueryManager.Compile(xPath);
+            if (expr != null)
+                CompiledExpressions.Add(xPath, expr);
             return expr;
         }
 
@@ -69,10 +71,10 @@ namespace Mapsui.Providers.Wfs.Xml
         /// </summary>
         /// <param name="xPath">The compiled XPath expression</param>
         /// <param name="queryParameters">Parameters for the compiled XPath expression</param>
-        public override IXPathQueryManager GetXPathQueryManagerInContext(XPathExpression xPath,
-                                                                         DictionaryEntry[] queryParameters = null)
+        public override IXPathQueryManager? GetXPathQueryManagerInContext(XPathExpression? xPath,
+                                                                         DictionaryEntry[]? queryParameters = null)
         {
-            IXPathQueryManager xPathQueryManager = (queryParameters == null)
+            var xPathQueryManager = (queryParameters == null)
                                                        ? XPathQueryManager.GetXPathQueryManagerInContext(xPath)
                                                        : XPathQueryManager.GetXPathQueryManagerInContext(xPath,
                                                                                                           queryParameters);
@@ -82,5 +84,5 @@ namespace Mapsui.Providers.Wfs.Xml
             return new XPathQueryManagerCompiledExpressionsDecorator(xPathQueryManager);
         }
 
-            }
+    }
 }

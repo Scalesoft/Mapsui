@@ -2,12 +2,13 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Mapsui.Extensions;
 using Mapsui.Layers;
-using Mapsui.Projection;
+using Mapsui.Layers.Tiling;
+using Mapsui.Projections;
 using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.UI;
-using Mapsui.Utilities;
 using Newtonsoft.Json;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -30,7 +31,7 @@ namespace Mapsui.Samples.Common.Maps
 
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
             map.Layers.Add(CreatePointLayer());
-            map.Home = n => n.NavigateTo(map.Layers[1].Envelope.Centroid, map.Resolutions[5]);
+            map.Home = n => n.NavigateTo(map.Layers[1].Extent?.Centroid, map.Resolutions[5]);
             return map;
         }
 
@@ -39,8 +40,8 @@ namespace Mapsui.Samples.Common.Maps
             return new MemoryLayer
             {
                 Name = "Points",
-                IsMapInfoLayer=true,
-                DataSource = new MemoryProvider(GetCitiesFromEmbeddedResource()),
+                IsMapInfoLayer = true,
+                DataSource = new MemoryProvider<IFeature>(GetCitiesFromEmbeddedResource()),
                 Style = CreateBitmapStyle()
             };
         }
@@ -51,12 +52,9 @@ namespace Mapsui.Samples.Common.Maps
             var assembly = typeof(PointsSample).GetTypeInfo().Assembly;
             var stream = assembly.GetManifestResourceStream(path);
             var cities = DeserializeFromStream<City>(stream);
-            
-            return cities.Select(c =>
-            {
-                var feature = new Feature();
-                var point = SphericalMercator.FromLonLat(c.Lng, c.Lat);
-                feature.Geometry = point;
+
+            return cities.Select(c => {
+                var feature = new PointFeature(SphericalMercator.FromLonLat(c.Lng, c.Lat).ToMPoint());
                 feature["name"] = c.Name;
                 feature["country"] = c.Country;
                 return feature;
@@ -65,8 +63,8 @@ namespace Mapsui.Samples.Common.Maps
 
         private class City
         {
-            public string Country { get; set; }
-            public string Name { get; set; }
+            public string? Country { get; set; }
+            public string? Name { get; set; }
             public double Lat { get; set; }
             public double Lng { get; set; }
         }
@@ -75,10 +73,10 @@ namespace Mapsui.Samples.Common.Maps
         {
             var serializer = new JsonSerializer();
 
-            using (var sr = new StreamReader(stream))
+            using (var sr = new System.IO.StreamReader(stream))
             using (var jsonTextReader = new JsonTextReader(sr))
             {
-                return serializer.Deserialize<List<T>>(jsonTextReader);
+                return serializer.Deserialize<List<T>>(jsonTextReader) ?? new List<T>();
             }
         }
 

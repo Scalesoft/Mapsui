@@ -1,8 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Mapsui Contributers</Authors>
+    <RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64;android-x64;android-arm64;android-arm;android-x86</RuntimeIdentifiers>
   </PropertyGroup>
+
   <ItemGroup>
     <None Remove="EmbeddedResources\cities.geojson" />
     <None Remove="EmbeddedResources\cities.json" />
@@ -25,6 +28,7 @@
     <None Remove="MbTiles\torrejon-de-ardoz.mbtiles" />
     <None Remove="MbTiles\world.mbtiles" />
   </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="EmbeddedResources\cities.geojson" />
     <EmbeddedResource Include="EmbeddedResources\cities.json" />
@@ -66,6 +70,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Mapsui.Geometries\Mapsui.Geometries.csproj" />
+    <ProjectReference Include="..\..\Mapsui.Layers.Tiling\Mapsui.Layers.Tiling.csproj" />
     <ProjectReference Include="..\..\Mapsui\Mapsui.csproj" />
     <ProjectReference Include="..\Mapsui.Samples.CustomWidget\Mapsui.Samples.CustomWidget.csproj" />
   </ItemGroup>

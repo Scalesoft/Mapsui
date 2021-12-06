@@ -18,7 +18,7 @@ namespace Mapsui.Providers.Wfs.Utilities
     /// </summary>
     internal class PathNode : IPathNode
     {
-        
+
         private readonly string _xmlElementNodeName;
         private readonly string _xmlElementNsUri;
         private bool _isActive = true;
@@ -26,21 +26,15 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// <summary>
         /// Gets the namespace URI of the element-node
         /// </summary>
-        internal string XmlElementNsUri
-        {
-            get { return _xmlElementNsUri; }
-        }
+        internal string XmlElementNsUri => _xmlElementNsUri;
 
         /// <summary>
         /// Gets the local name of the element-node
         /// </summary>
-        internal string XmlElementNodeName
-        {
-            get { return _xmlElementNodeName; }
-        }
+        internal string XmlElementNodeName => _xmlElementNodeName;
 
-        
-        
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PathNode"/> class.
         /// </summary>
@@ -53,8 +47,8 @@ namespace Mapsui.Providers.Wfs.Utilities
             _xmlElementNodeName = nameTable.Add(elementNodeName);
         }
 
-        
-        
+
+
         /// <summary>
         /// This method evaluates, if the position of an XmlReader is at the element-node represented by the instance of this class.
         /// It compares pointers instead of literal values due to performance reasons.
@@ -66,7 +60,7 @@ namespace Mapsui.Providers.Wfs.Utilities
             if (!_isActive) return true;
 
             //Compare pointers instead of literal values
-            if (xmlReader.NameTable != null && 
+            if (xmlReader.NameTable != null &&
                 ((ReferenceEquals(_xmlElementNsUri, xmlReader.NameTable.Get(xmlReader.NamespaceURI))) &&
                  (ReferenceEquals(_xmlElementNodeName, xmlReader.NameTable.Get(xmlReader.LocalName)))))
                 return true;
@@ -80,22 +74,22 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public bool IsActive
         {
-            get { return _isActive; }
-            set { _isActive = value; }
+            get => _isActive;
+            set => _isActive = value;
         }
 
-            }
+    }
 
     /// <summary>
     /// This class represents a collection of path nodes that can be used alternatively.
     /// </summary>
     internal class AlternativePathNodesCollection : IPathNode
     {
-        
+
         private readonly List<IPathNode> _pathNodes = new List<IPathNode>();
 
-        
-        
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AlternativePathNodesCollection"/> class.
         /// </summary>
@@ -106,15 +100,15 @@ namespace Mapsui.Providers.Wfs.Utilities
             _pathNodes.AddRange(pathNodes);
         }
 
-        
-        
+
+
         /// <summary>
         /// This method evaluates all inherent instances of <see cref="IPathNode"/>.
         /// </summary>
         /// <param name="reader">An XmlReader instance</param>
         public bool Matches(XmlReader reader)
         {
-            foreach (IPathNode pathNode in _pathNodes)
+            foreach (var pathNode in _pathNodes)
                 if (pathNode.Matches(reader)) return true;
             return false;
         }
@@ -125,13 +119,13 @@ namespace Mapsui.Providers.Wfs.Utilities
         /// </summary>
         public bool IsActive
         {
-            get { return _pathNodes[0].IsActive; }
+            get => _pathNodes[0].IsActive;
             set
             {
-                foreach (IPathNode pathNode in _pathNodes)
+                foreach (var pathNode in _pathNodes)
                     pathNode.IsActive = value;
             }
         }
 
-            }
+    }
 }

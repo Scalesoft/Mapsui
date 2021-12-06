@@ -1,6 +1,4 @@
-﻿using Mapsui.Rendering.Skia;
-using Mapsui.Samples.Common;
-using Mapsui.Samples.Common.ExtensionMethods;
+﻿using Mapsui.Samples.Common;
 using Mapsui.Samples.CustomWidget;
 using Mapsui.UI.Forms;
 using Plugin.Geolocator;
@@ -8,6 +6,8 @@ using Plugin.Geolocator.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mapsui.Extensions;
+using Mapsui.Styles;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -16,8 +16,8 @@ namespace Mapsui.Samples.Forms
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class MainPageLarge : ContentPage
     {
-        IEnumerable<ISample> allSamples;
-        Func<object, EventArgs, bool> clicker;
+        IEnumerable<ISample>? allSamples;
+        Func<object?, EventArgs, bool>? clicker;
 
         public MainPageLarge()
         {
@@ -52,22 +52,25 @@ namespace Mapsui.Samples.Forms
 
         private void MapView_Info(object sender, UI.MapInfoEventArgs e)
         {
-            featureInfo.Text = $"Click Info:";
-
-            if (e?.MapInfo?.Feature != null)
+            if (e.MapInfo?.Feature is IFeature feature)
             {
-                featureInfo.Text = $"Click Info:{Environment.NewLine}{e.MapInfo.Feature.ToDisplayText()}";
+                featureInfo.Text = $"Click Info:";
 
-                foreach (var style in e.MapInfo.Feature.Styles)
+                if (e?.MapInfo?.Feature != null)
                 {
-                    if (style is CalloutStyle)
-                    {
-                        style.Enabled = !style.Enabled;
-                        e.Handled = true;
-                    }
-                }
+                    featureInfo.Text = $"Click Info:{Environment.NewLine}{feature.ToDisplayText()}";
 
-                mapView.Refresh();
+                    foreach (var style in e.MapInfo.Feature.Styles)
+                    {
+                        if (style is CalloutStyle)
+                        {
+                            style.Enabled = !style.Enabled;
+                            e.Handled = true;
+                        }
+                    }
+
+                    mapView.Refresh();
+                }
             }
         }
 
@@ -84,7 +87,7 @@ namespace Mapsui.Samples.Forms
 
         private void OnMapClicked(object sender, MapClickedEventArgs e)
         {
-            e.Handled = clicker == null ? false : (bool)clicker?.Invoke(sender as MapView, e);
+            e.Handled = clicker != null && (clicker?.Invoke(sender as MapView, e) ?? false);
         }
 
         void OnSelection(object sender, SelectedItemChangedEventArgs e)
@@ -103,8 +106,8 @@ namespace Mapsui.Samples.Forms
             }
 
             clicker = null;
-            if (sample is IFormsSample)
-                clicker = ((IFormsSample)sample).OnClick;
+            if (sample is IFormsSample formsSample)
+                clicker = formsSample.OnClick;
 
             listView.SelectedItem = null;
         }
@@ -180,8 +183,7 @@ namespace Mapsui.Samples.Forms
         /// <param name="e">Event arguments for new position</param>
         private void MyLocationPositionChanged(object sender, PositionEventArgs e)
         {
-            Device.BeginInvokeOnMainThread(() =>
-            {
+            Device.BeginInvokeOnMainThread(() => {
                 mapView.MyLocationLayer.UpdateMyLocation(new UI.Forms.Position(e.Position.Latitude, e.Position.Longitude));
                 mapView.MyLocationLayer.UpdateMyDirection(e.Position.Heading, mapView.Viewport.Rotation);
                 mapView.MyLocationLayer.UpdateMySpeed(e.Position.Speed);

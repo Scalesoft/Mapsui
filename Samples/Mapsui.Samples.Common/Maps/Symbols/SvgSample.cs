@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-using Mapsui.Geometries;
 using Mapsui.Layers;
+using Mapsui.Layers.Tiling;
 using Mapsui.Logging;
 using Mapsui.Providers;
 using Mapsui.Samples.Common.Helpers;
 using Mapsui.Styles;
 using Mapsui.UI;
-using Mapsui.Utilities;
 
 namespace Mapsui.Samples.Common.Maps
 {
     public class SvgSample : ISample
     {
-        private static readonly ConcurrentDictionary<string, int> imageCache = new ConcurrentDictionary<string, int>();
+        private static readonly ConcurrentDictionary<string, int> ImageCache = new ConcurrentDictionary<string, int>();
         public string Name => "Svg";
         public string Category => "Symbols";
 
@@ -29,12 +29,12 @@ namespace Mapsui.Samples.Common.Maps
             var map = new Map();
 
             map.Layers.Add(OpenStreetMap.CreateTileLayer());
-            map.Layers.Add(CreateSvgLayer(map.Envelope));
-            
+            map.Layers.Add(CreateSvgLayer(map.Extent));
+
             return map;
         }
 
-        private static ILayer CreateSvgLayer(BoundingBox envelope)
+        private static ILayer CreateSvgLayer(MRect? envelope)
         {
             return new MemoryLayer
             {
@@ -45,23 +45,21 @@ namespace Mapsui.Samples.Common.Maps
             };
         }
 
-        public static MemoryProvider CreateMemoryProviderWithDiverseSymbols(BoundingBox envelope, int count = 100)
+        public static MemoryProvider<IFeature> CreateMemoryProviderWithDiverseSymbols(MRect? envelope, int count = 100)
         {
-            return new MemoryProvider(CreateSvgFeatures(RandomPointHelper.GenerateRandomPoints(envelope, count)));
+            return new MemoryProvider<IFeature>(CreateSvgFeatures(RandomPointGenerator.GenerateRandomPoints(envelope, count)));
         }
 
-        private static Features CreateSvgFeatures(IEnumerable<IGeometry> randomPoints)
+        private static IEnumerable<IFeature> CreateSvgFeatures(IEnumerable<MPoint> randomPoints)
         {
-            var features = new Features();
             var counter = 0;
-            foreach (var point in randomPoints)
-            {
-                var feature = new Feature { Geometry = point, ["Label"] = counter.ToString() };
+
+            return randomPoints.Select(p => {
+                var feature = new PointFeature(p) { ["Label"] = counter.ToString() };
                 feature.Styles.Add(CreateSvgStyle("Mapsui.Samples.Common.Images.Pin.svg", 0.5));
-                features.Add(feature);
                 counter++;
-            }
-            return features;
+                return feature;
+            });
         }
 
         private static SymbolStyle CreateSvgStyle(string embeddedResourcePath, double scale)
@@ -72,14 +70,14 @@ namespace Mapsui.Samples.Common.Maps
 
         private static int GetBitmapIdForEmbeddedResource(string imagePath)
         {
-            if (!imageCache.TryGetValue(imagePath, out var id))
+            if (!ImageCache.TryGetValue(imagePath, out var id))
             {
                 try
                 {
                     var assembly = typeof(PointsSample).GetTypeInfo().Assembly;
                     var image = assembly.GetManifestResourceStream(imagePath);
                     id = BitmapRegistry.Instance.Register(image);
-                    imageCache[imagePath] = id;
+                    ImageCache[imagePath] = id;
                 }
                 catch (Exception exception)
                 {
